@@ -467,7 +467,7 @@ docs/
 
 | 增量 | 日期 | 验证证据 | 提交 |
 |---|---|---|---|
-| I0 | 2026-10-19 | `pnpm test` 6/6、`pnpm build` 通过、Playwright 4/4、1920/1365/768/390 人工视觉检查、生产预览无控制台错误 | `b8839d7` |
+| I0 | 2026-10-19 | `pnpm test` 6/6、`pnpm build` 通过、Playwright 4/4、1920/1365/768/390 人工视觉检查、生产预览无控制台错误、GitHub Pages 线上部署成功（<https://gitbaghero.github.io/mirrorless-zoom-optics-lab/>） | `b8839d7` / `e7ba132` |
 
 **下一批：I1 — 19 片结构与六组。**
 
