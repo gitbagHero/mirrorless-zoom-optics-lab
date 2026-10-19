@@ -1,4 +1,5 @@
 import type { FocusController, FocusMode } from '../hooks/useFocusController'
+import { ModuleHeader } from './ModuleHeader'
 import { TargetScene } from './TargetScene'
 
 type FocusPanelProps = {
@@ -49,16 +50,13 @@ export function FocusPanel({ controller, focal }: FocusPanelProps) {
   }
 
   return (
-    <section className="focus-lab section-shell" id="focus" aria-labelledby="focus-title">
-      <div className="section-head">
-        <div>
-          <p className="eyebrow">I4 / FOCUS LAB</p>
-          <h2 id="focus-title">对焦实验室</h2>
-        </div>
-        <p className="section-note">
-          G5 向像方移动完成内对焦。手动拖动对焦环，或让 AF-S / AF-C 自动寻找合焦位置。
-        </p>
-      </div>
+    <section className="module focus-module" aria-labelledby="focus-title">
+      <ModuleHeader
+        eyebrow="03 / FOCUS LAB"
+        title="对焦实验室"
+        note="G5 向像方移动完成内对焦。手动拖动对焦环，或让 AF-S / AF-C 自动寻找合焦位置。"
+        titleId="focus-title"
+      />
 
       <div className="focus-grid">
         <div className="focus-controls">

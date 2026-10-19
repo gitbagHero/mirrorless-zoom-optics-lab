@@ -5,9 +5,10 @@ import type { Spacing } from '../optics/surfaces'
 type GroupMotionPanelProps = {
   focal: number
   spacing: Spacing
+  compact?: boolean
 }
 
-export function GroupMotionPanel({ focal, spacing }: GroupMotionPanelProps) {
+export function GroupMotionPanel({ focal, spacing, compact = false }: GroupMotionPanelProps) {
   const current = buildLensLayout(spacing)
   const wide = buildLensLayout({
     D1: 1.5,
@@ -35,10 +36,14 @@ export function GroupMotionPanel({ focal, spacing }: GroupMotionPanelProps) {
   const isWide = focal <= 24
 
   return (
-    <section className="motion-panel" data-testid="motion-panel" aria-labelledby="motion-title">
+    <section
+      className={`motion-panel ${compact ? 'is-compact' : ''}`}
+      data-testid="motion-panel"
+      aria-labelledby="motion-title"
+    >
       <div className="motion-head">
         <div>
-          <p className="eyebrow">I3 / GROUP MOTION</p>
+          <p className="eyebrow">ZOOM / GROUP MOTION</p>
           <h3 id="motion-title">变焦时谁在动</h3>
         </div>
         <div className="motion-meta">

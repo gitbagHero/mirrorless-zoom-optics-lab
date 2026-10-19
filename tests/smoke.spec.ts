@@ -1,22 +1,35 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
-test('renders the v1.0 lab and the 19-element structure', async ({ page }) => {
+async function goTo(page: Page, label: string) {
+  await page
+    .getByRole('navigation', { name: '模块导航' })
+    .getByRole('button', { name: new RegExp(label) })
+    .click()
+}
+
+test('renders the overview and switches to the workbench', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page).toHaveTitle(/Mirrorless Zoom Optics Lab/)
+  await expect(page).toHaveTitle(/概览 · Mirrorless Zoom Optics Lab/)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('24–200mm')
-  await expect(page.getByTestId('lens-structure')).toBeVisible()
+  await expect(page.getByText('LENS / SPEC')).toBeVisible()
+  await expect(page.getByTestId('lens-structure')).toHaveCount(0)
+
+  await goTo(page, '工作台')
+  await expect(page).toHaveTitle(/工作台 · Mirrorless Zoom Optics Lab/)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('光学工作台')
   await expect(page.getByText('v1.0 RELEASE')).toBeVisible()
-  await expect(page.locator('.build-badge')).toContainText('v1.0')
+  await expect(page.getByTestId('lens-structure')).toBeVisible()
   await expect(page.getByTestId('element-L11')).toBeVisible()
   await expect(page.getByTestId('element-L62')).toBeVisible()
   await expect(page.locator('[data-testid^="element-"]')).toHaveCount(19)
   await expect(page.getByTestId('ray-canvas')).toBeVisible()
   await expect(page.getByTestId('efl-value')).toContainText('24.70')
+  await expect(page.getByRole('heading', { name: /24–200mm/ })).toHaveCount(0)
 })
 
 test('selects an element and switches between 19 elements and 6 groups', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/#workbench')
 
   const inspector = page.getByTestId('inspector-selection')
   await expect(inspector).toContainText('G1')
@@ -38,49 +51,70 @@ test('selects an element and switches between 19 elements and 6 groups', async (
 })
 
 test('moves the six groups across the zoom range', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/#workbench')
 
   const slider = page.getByRole('slider', { name: '焦距' })
   await expect(slider).toHaveValue('24')
   await expect(page.getByTestId('efl-value')).toContainText('24.70')
-  await expect(page.getByTestId('motion-G1')).toContainText('0.0')
 
   await slider.focus()
   await page.keyboard.press('End')
   await expect(slider).toHaveValue('200')
   await expect(page.locator('.zoom-value')).toContainText('200')
   await expect(page.getByTestId('efl-value')).toContainText('194.00')
+
+  await page.getByRole('tab', { name: '变焦运动' }).click()
+  await expect(page.getByTestId('motion-panel')).toBeVisible()
   await expect(page.getByTestId('motion-G1')).toContainText('69.8')
   await expect(page.getByTestId('motion-G3')).toContainText('31.0')
   await expect(page.getByTestId('motion-G6')).toContainText('31.0')
+  await expect(page.getByTestId('inspector-selection')).toHaveCount(0)
 
+  await slider.focus()
   await page.keyboard.press('Home')
   await expect(slider).toHaveValue('24')
-  await expect(page.getByTestId('efl-value')).toContainText('24.70')
   await expect(page.getByTestId('motion-G1')).toContainText('0.0')
 })
 
-test('guide presets drive the workbench and open the model notes', async ({ page }) => {
-  await page.goto('/')
+test('guide presets switch modules and target the right panel', async ({ page }) => {
+  await page.goto('/#guide')
 
+  await page.getByTestId('guide-nav-zoom').click()
+  await expect(page.getByTestId('guide-try-zoom')).toBeVisible()
   await page.getByTestId('guide-try-zoom').click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('光学工作台')
   await expect(page.locator('#focal-range')).toHaveValue('200')
+  await expect(page.getByRole('tab', { name: '变焦运动' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+  await expect(page.getByTestId('motion-panel')).toBeVisible()
+
+  await page.getByRole('tab', { name: '结构说明' }).click()
   await expect(page.getByRole('button', { name: '6 组功能' })).toHaveAttribute(
     'aria-pressed',
     'true',
   )
   await expect(page.getByTestId('inspector-selection')).toContainText('G5')
 
+  await goTo(page, '导览')
+  await page.getByTestId('guide-nav-elements').click()
   await page.getByTestId('guide-try-elements').click()
   await expect(page.locator('#focal-range')).toHaveValue('50')
   await expect(page.getByTestId('inspector-selection')).toContainText('L12')
 
+  await goTo(page, '导览')
+  await page.getByTestId('guide-nav-model').click()
   await page.getByTestId('guide-try-model').click()
-  await expect(page.locator('#data-notes details')).toHaveAttribute('open', '')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('数据说明与来源')
+  await expect(page.getByTestId('repo-link')).toHaveAttribute(
+    'href',
+    'https://github.com/gitbagHero/mirrorless-zoom-optics-lab',
+  )
 })
 
 test('focuses manually and with AF-S / AF-C', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/#focus')
 
   const status = page.getByTestId('focus-status')
   const clarity = page.getByTestId('focus-clarity')
@@ -106,7 +140,7 @@ test('focuses manually and with AF-S / AF-C', async ({ page }) => {
 })
 
 test('switches ray presets and toggles the ray layer', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/#workbench')
 
   const canvas = page.getByTestId('ray-canvas')
   await expect(canvas).toBeVisible()
@@ -134,27 +168,32 @@ test('switches ray presets and toggles the ray layer', async ({ page }) => {
   await expect(toggle).toBeChecked()
 })
 
-test('opens the data notes and exposes sources', async ({ page }) => {
-  await page.goto('/')
+test('data module exposes sources and the repository address', async ({ page }) => {
+  await page.goto('/#data')
 
-  const notes = page.locator('#data-notes details')
-  await expect(notes).not.toHaveAttribute('open', '')
-  await notes.locator('summary').click()
-  await expect(notes).toHaveAttribute('open', '')
-  await expect(notes.getByRole('link', { name: /产品页/ })).toBeVisible()
+  await expect(page.getByText('模型边界', { exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: /产品页/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /US20220121021A1/ })).toBeVisible()
+  await expect(page.getByTestId('repo-link')).toBeVisible()
+  await expect(page.getByTestId('repo-link')).toHaveAttribute(
+    'href',
+    'https://github.com/gitbagHero/mirrorless-zoom-optics-lab',
+  )
 })
 
-test('does not overflow the viewport on mobile', async ({ page }) => {
+test('does not overflow the viewport on mobile for every module', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
 
-  const overflow = await page.evaluate(() => {
-    const root = document.documentElement
-    return root.scrollWidth - root.clientWidth
-  })
-
-  expect(overflow).toBeLessThanOrEqual(1)
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  for (const label of ['概览', '工作台', '对焦', '导览', '数据说明']) {
+    await goTo(page, label)
+    const overflow = await page.evaluate(() => {
+      const root = document.documentElement
+      return root.scrollWidth - root.clientWidth
+    })
+    expect(overflow, label).toBeLessThanOrEqual(1)
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  }
 })
 
 test('supports keyboard selection and the skip link without console errors', async ({
@@ -174,22 +213,27 @@ test('supports keyboard selection and the skip link without console errors', asy
   await page.keyboard.press('Tab')
   await expect(page.locator('.skip-link')).toBeFocused()
   await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/#workbench$/)
+  await expect(page).toHaveURL(/#module-main$/)
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('24–200mm')
 
+  await goTo(page, '工作台')
   await page.getByTestId('element-L12').focus()
   await page.keyboard.press('Enter')
   await expect(page.getByTestId('inspector-selection')).toContainText('L12')
   expect(errors).toEqual([])
 })
 
-test('keyboard main path: zoom, manual defocus, AF-S refocus', async ({ page }) => {
-  await page.goto('/')
+test('keyboard main path: zoom, module switch, manual defocus, AF-S refocus', async ({
+  page,
+}) => {
+  await page.goto('/#workbench')
 
   const zoom = page.getByRole('slider', { name: '焦距' })
   await zoom.focus()
   await page.keyboard.press('End')
   await expect(zoom).toHaveValue('200')
 
+  await goTo(page, '对焦')
   const manual = page.getByRole('slider', { name: '手动对焦' })
   await manual.focus()
   await page.keyboard.press('End')
@@ -203,7 +247,7 @@ test('keyboard main path: zoom, manual defocus, AF-S refocus', async ({ page }) 
 
 test('respects reduced motion and exposes accessible names', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/')
+  await page.goto('/#focus')
 
   await page.getByRole('slider', { name: '手动对焦' }).press('End')
   await expect(page.getByTestId('focus-status')).toHaveText('离焦')
