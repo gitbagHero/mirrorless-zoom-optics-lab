@@ -1,26 +1,11 @@
-import { useState, type CSSProperties, type PointerEvent } from 'react'
-import { LensExterior } from './LensExterior'
+import { BlueprintLens } from './BlueprintLens'
 
 type LandingPageProps = {
   exiting: boolean
   onEnter: () => void
 }
 
-type Tilt = { x: number; y: number }
-
 export function LandingPage({ exiting, onEnter }: LandingPageProps) {
-  const [tilt, setTilt] = useState<Tilt>({ x: -1.5, y: -3 })
-
-  const handlePointerMove = (event: PointerEvent<HTMLButtonElement>) => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const rect = event.currentTarget.getBoundingClientRect()
-    const px = (event.clientX - rect.left) / rect.width - 0.5
-    const py = (event.clientY - rect.top) / rect.height - 0.5
-    setTilt({ x: -1.5 - py * 2, y: -3 + px * 5 })
-  }
-
-  const resetTilt = () => setTilt({ x: -1.5, y: -3 })
-
   return (
     <main className={`landing-page ${exiting ? 'is-exiting' : ''}`}>
       <header className="landing-topbar">
@@ -39,34 +24,25 @@ export function LandingPage({ exiting, onEnter }: LandingPageProps) {
       </header>
 
       <div className="landing-content">
-        <p className="eyebrow landing-eyebrow">NIKKOR Z 24-200 / OPTICS LAB</p>
+        <p className="eyebrow landing-eyebrow">NIKKOR Z 24-200 / OPTICAL BLUEPRINT</p>
         <h1 className="landing-title">看见一支变焦镜头的内部。</h1>
         <p className="landing-subtitle">
-          从真实外观进入光学剖面，观察 19 片镜片如何变焦与对焦。
+          从 19 片镜组的设计剖面进入，观察变焦、对焦与像面关系。
         </p>
 
-        <button
-          type="button"
-          className="landing-lens-button"
-          aria-label="进入工作台，查看镜头剖面"
-          onClick={onEnter}
-          onPointerMove={handlePointerMove}
-          onPointerLeave={resetTilt}
-        >
-          <span className="landing-lens-shadow" aria-hidden="true" />
-          <span
-            className="landing-lens"
-            style={
-              {
-                '--tilt-x': `${tilt.x}deg`,
-                '--tilt-y': `${tilt.y}deg`,
-              } as CSSProperties
-            }
-            aria-hidden="true"
-          >
-            <LensExterior />
-          </span>
-        </button>
+        <div className="landing-blueprint">
+          <span className="blueprint-corner blueprint-corner-tl" aria-hidden="true" />
+          <span className="blueprint-corner blueprint-corner-tr" aria-hidden="true" />
+          <span className="blueprint-corner blueprint-corner-bl" aria-hidden="true" />
+          <span className="blueprint-corner blueprint-corner-br" aria-hidden="true" />
+          <BlueprintLens />
+        </div>
+
+        <div className="landing-blueprint-meta">
+          <span>DRAWING 01 / OPTICAL SECTION</span>
+          <span>NIKKOR Z 24-200 · 19E / 15G</span>
+          <span>50 mm / PATENT EXAMPLE 8</span>
+        </div>
 
         <button type="button" className="landing-enter" onClick={onEnter}>
           进入工作台

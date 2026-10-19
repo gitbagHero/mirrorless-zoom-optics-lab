@@ -13,7 +13,7 @@ test('renders the landing and enters the workbench', async ({ page }) => {
   await expect(page).toHaveTitle(/Mirrorless Zoom Optics Lab/)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('看见一支变焦镜头的内部。')
   await expect(page.getByRole('button', { name: /进入工作台/ }).first()).toBeVisible()
-  await expect(page.locator('.landing-lens')).toBeVisible()
+  await expect(page.locator('.blueprint-lens-svg')).toBeVisible()
   await expect(page.getByRole('navigation', { name: '模块导航' })).toHaveCount(0)
 
   await page.getByRole('button', { name: '进入工作台', exact: true }).click()
