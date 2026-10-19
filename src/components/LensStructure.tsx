@@ -122,14 +122,16 @@ function ShellTube({
 
 function LensShell({ layout, focal }: { layout: LensLayout; focal: number }) {
   const mountX = layout.imageX - 16 * STAGE.axialScale
-  const extension = ((focal - 24) / (200 - 24)) * 300
+  const g1FrontX = Math.min(...layout.elements.map((element) => element.startX))
 
-  // Two moving sleeves, both with fixed physical lengths. The front sleeve
-  // travels at 1.0x and the mid sleeve at 0.65x, so their overlap changes.
+  // The front sleeve follows G1 with a constant 18px front clearance. Both
+  // moving sleeves have fixed physical lengths; the mid sleeve travels at
+  // 0.65x the front sleeve, so only the overlap changes.
   const frontLength = 200
   const midLength = 300
-  const frontX = 350 - extension
-  const midX = 430 - extension * 0.65
+  const frontX = g1FrontX - 18
+  const frontTravel = Math.max(0, 353.42 - frontX)
+  const midX = 430 - frontTravel * 0.65
   const rearStart = 500
   const frontEnd = frontX + frontLength
   const midEnd = midX + midLength
@@ -151,6 +153,7 @@ function LensShell({ layout, focal }: { layout: LensLayout; focal: number }) {
       className="lens-shell"
       data-testid="lens-shell"
       data-front-x={frontX.toFixed(2)}
+      data-g1-front={g1FrontX.toFixed(2)}
       data-front-length={frontLength}
       data-front-ratio="1.0"
       data-mid-x={midX.toFixed(2)}
