@@ -1,4 +1,5 @@
 import { useState, type CSSProperties, type PointerEvent } from 'react'
+import { LensExterior } from './LensExterior'
 
 type LandingPageProps = {
   exiting: boolean
@@ -63,20 +64,7 @@ export function LandingPage({ exiting, onEnter }: LandingPageProps) {
             }
             aria-hidden="true"
           >
-            <span className="landing-lens-body">
-              <span className="landing-lens-front">
-                <span className="landing-lens-glass" />
-                <span className="landing-lens-front-text">NIKKOR Z · 67</span>
-              </span>
-              <span className="landing-lens-zoom" />
-              <span className="landing-lens-focus" />
-              <span className="landing-lens-rear">
-                <span className="landing-lens-mark">24-200/4-6.3</span>
-                <span className="landing-lens-switch" />
-              </span>
-              <span className="landing-lens-mount" />
-            </span>
-            <span className="landing-lens-highlight" />
+            <LensExterior />
           </span>
         </button>
 

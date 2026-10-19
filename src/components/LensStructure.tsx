@@ -85,149 +85,161 @@ function GroupBracket({
   )
 }
 
+function ShellTube({
+  x1,
+  x2,
+  radius,
+  fill,
+  stroke,
+  label,
+  labelColor,
+}: {
+  x1: number
+  x2: number
+  radius: number
+  fill: string
+  stroke: string
+  label: string
+  labelColor: string
+}) {
+  const wall = 9
+  const top = STAGE.centerY - radius
+  const bottom = STAGE.centerY + radius
+  return (
+    <g className="shell-tube">
+      <rect x={x1} y={top} width={x2 - x1} height={wall} rx={4} fill={fill} stroke={stroke} strokeWidth={1.1} />
+      <rect x={x1} y={bottom - wall} width={x2 - x1} height={wall} rx={4} fill={fill} stroke={stroke} strokeWidth={1.1} />
+      <line x1={x1} y1={top + wall} x2={x1} y2={bottom - wall} stroke={stroke} strokeWidth={1.1} />
+      <line x1={x2} y1={top + wall} x2={x2} y2={bottom - wall} stroke={stroke} strokeWidth={1.1} />
+      <line x1={x1 + 3} y1={top + wall + 2} x2={x2 - 3} y2={top + wall + 2} stroke={stroke} strokeOpacity={0.35} strokeWidth={0.7} />
+      <line x1={x1 + 3} y1={bottom - wall - 2} x2={x2 - 3} y2={bottom - wall - 2} stroke={stroke} strokeOpacity={0.28} strokeWidth={0.7} />
+      <text x={x1 + 8} y={top + wall - 2} className="shell-label" fill={labelColor}>
+        {label}
+      </text>
+    </g>
+  )
+}
+
 function LensShell({ layout, focal }: { layout: LensLayout; focal: number }) {
   const frontX = Math.min(...layout.elements.map((element) => element.startX)) - 12
   const mountX = layout.imageX - 16 * STAGE.axialScale
-  const length = Math.max(mountX - frontX, 300)
-  const centerY = STAGE.centerY
-  const outer = 94
-  const band = 11
-  const top = centerY - outer
-  const bottom = centerY + outer
-  const zoomStart = frontX + length * 0.14
-  const zoomEnd = frontX + length * 0.44
-  const focusStart = mountX - length * 0.24
-  const focusEnd = mountX - length * 0.17
-  const rearStart = mountX - Math.min(240, length * 0.36)
-  const ribCount = 30
+  const rearStart = mountX - 240
+  const midStart = rearStart - 170
+  const frontEnd = midStart + 22
+
+  const frontRadius = 76
+  const midRadius = 90
+  const rearRadius = 104
+
+  const frontTop = STAGE.centerY - frontRadius
+  const frontBottom = STAGE.centerY + frontRadius
+  const zoomStart = frontX + 28
+  const zoomEnd = Math.min(frontX + 142, frontEnd - 10)
+  const focusStart = mountX - 122
+  const focusEnd = mountX - 76
+  const ribCount = 24
 
   return (
     <g className="lens-shell" data-testid="lens-shell" data-front-x={frontX.toFixed(2)} aria-hidden="true">
-      <rect
-        x={frontX}
-        y={top}
-        width={length}
-        height={outer * 2}
-        rx={22}
-        fill="rgba(148, 163, 184, 0.08)"
-        stroke="rgba(203, 213, 225, 0.58)"
-        strokeWidth={1.5}
+      <ShellTube
+        x1={rearStart}
+        x2={mountX}
+        radius={rearRadius}
+        fill="rgba(148, 163, 184, 0.16)"
+        stroke="rgba(203, 213, 225, 0.55)"
+        label="OUTER"
+        labelColor="rgba(226,232,240,0.66)"
+      />
+      <ShellTube
+        x1={midStart}
+        x2={rearStart + 14}
+        radius={midRadius}
+        fill="rgba(94, 234, 212, 0.1)"
+        stroke="rgba(94, 234, 212, 0.4)"
+        label="ZOOM TUBE"
+        labelColor="rgba(94,234,212,0.7)"
+      />
+      <ShellTube
+        x1={frontX}
+        x2={frontEnd}
+        radius={frontRadius}
+        fill="rgba(226, 232, 240, 0.12)"
+        stroke="rgba(226, 232, 240, 0.42)"
+        label="FRONT"
+        labelColor="rgba(226,232,240,0.62)"
       />
 
-      <rect
-        x={rearStart}
-        y={top + band}
-        width={mountX - rearStart}
-        height={outer * 2 - band * 2}
-        fill="rgba(15, 23, 42, 0.32)"
-        stroke="rgba(203, 213, 225, 0.28)"
-        strokeWidth={0.8}
-      />
-
+      {/* Front rim: the outermost lip of the extending tube. */}
       <rect
         x={frontX}
-        y={top}
-        width={length}
-        height={band}
+        y={frontTop - 5}
+        width={16}
+        height={frontBottom - frontTop + 10}
         rx={5}
-        fill="rgba(148, 163, 184, 0.36)"
-        stroke="rgba(226, 232, 240, 0.58)"
-        strokeWidth={1}
-      />
-      <rect
-        x={frontX}
-        y={bottom - band}
-        width={length}
-        height={band}
-        rx={5}
-        fill="rgba(15, 23, 42, 0.52)"
-        stroke="rgba(203, 213, 225, 0.48)"
-        strokeWidth={1}
-      />
-
-      <rect
-        x={frontX}
-        y={top}
-        width={18}
-        height={outer * 2}
-        rx={7}
-        fill="rgba(226, 232, 240, 0.2)"
-        stroke="rgba(226, 232, 240, 0.4)"
-        strokeWidth={1}
-      />
-      <rect
-        x={zoomStart}
-        y={top}
-        width={zoomEnd - zoomStart}
-        height={outer * 2}
-        rx={5}
-        fill="rgba(148, 163, 184, 0.18)"
-        stroke="rgba(203, 213, 225, 0.5)"
+        fill="rgba(226, 232, 240, 0.22)"
+        stroke="rgba(226, 232, 240, 0.55)"
         strokeWidth={1.2}
       />
-      <rect
-        x={focusStart}
-        y={top}
-        width={focusEnd - focusStart}
-        height={outer * 2}
-        rx={4}
-        fill="rgba(148, 163, 184, 0.08)"
-        stroke="rgba(203, 213, 225, 0.24)"
-        strokeWidth={0.8}
-      />
 
+      {/* Zoom ring sits on the front tube. */}
+      <rect
+        x={zoomStart}
+        y={frontTop - 3}
+        width={Math.max(zoomEnd - zoomStart, 24)}
+        height={frontBottom - frontTop + 6}
+        rx={4}
+        fill="rgba(148, 163, 184, 0.17)"
+        stroke="rgba(226, 232, 240, 0.42)"
+        strokeWidth={1}
+      />
       {Array.from({ length: ribCount }, (_, index) => {
-        const x = zoomStart + ((zoomEnd - zoomStart) / (ribCount - 1)) * index
+        const x = zoomStart + ((Math.max(zoomEnd - zoomStart, 24)) / (ribCount - 1)) * index
         return (
           <g key={`rib-${index}`}>
-            <line x1={x} y1={top + 2} x2={x} y2={top + band - 1} stroke="rgba(226,232,240,0.38)" strokeWidth={0.9} />
-            <line x1={x} y1={bottom - band + 1} x2={x} y2={bottom - 2} stroke="rgba(226,232,240,0.26)" strokeWidth={0.9} />
+            <line x1={x} y1={frontTop - 1} x2={x} y2={frontTop + 8} stroke="rgba(226,232,240,0.34)" strokeWidth={0.8} />
+            <line x1={x} y1={frontBottom - 8} x2={x} y2={frontBottom + 1} stroke="rgba(226,232,240,0.24)" strokeWidth={0.8} />
           </g>
         )
       })}
+      <text x={zoomStart + 7} y={frontTop + 18} className="shell-label" fill="rgba(226,232,240,0.58)">ZOOM</text>
 
-      <line
-        x1={rearStart}
-        y1={top + band}
-        x2={rearStart}
-        y2={bottom - band}
-        stroke="rgba(94, 234, 212, 0.55)"
-        strokeWidth={1.4}
-        strokeDasharray="3 5"
-      />
-      <line
-        x1={focusStart}
-        y1={top + band}
-        x2={focusStart}
-        y2={bottom - band}
-        stroke="rgba(203, 213, 225, 0.28)"
+      {/* Focus ring on the fixed rear body. */}
+      <rect
+        x={focusStart}
+        y={STAGE.centerY - rearRadius + 14}
+        width={focusEnd - focusStart}
+        height={rearRadius * 2 - 28}
+        rx={4}
+        fill="rgba(148, 163, 184, 0.14)"
+        stroke="rgba(226, 232, 240, 0.36)"
         strokeWidth={1}
       />
+      {Array.from({ length: 10 }, (_, index) => {
+        const x = focusStart + ((focusEnd - focusStart) / 9) * index
+        return <line key={`focus-rib-${index}`} x1={x} y1={STAGE.centerY - rearRadius + 18} x2={x} y2={STAGE.centerY + rearRadius - 18} stroke="rgba(226,232,240,0.16)" strokeWidth={0.7} />
+      })}
+      <text x={focusStart + 4} y={STAGE.centerY + rearRadius - 20} className="shell-label" fill="rgba(226,232,240,0.58)">FOCUS</text>
 
+      {/* Rear mount: a thin chrome bayonet ring, not a full lens cap. */}
       <rect
-        x={mountX - 8}
-        y={centerY - outer * 0.78}
+        x={mountX - 16}
+        y={STAGE.centerY - rearRadius + 12}
         width={16}
-        height={outer * 1.56}
-        rx={5}
+        height={rearRadius * 2 - 24}
+        rx={4}
         fill="rgba(15, 23, 42, 0.7)"
         stroke="rgba(203, 213, 225, 0.5)"
-        strokeWidth={1.2}
+        strokeWidth={1}
       />
-      <circle cx={mountX - 8} cy={centerY} r={4} fill="none" stroke="rgba(226,232,240,0.45)" />
-
-      <text x={frontX + 32} y={top + 18} className="shell-label" fill="rgba(226,232,240,0.8)">
-        67
-      </text>
-      <text x={zoomStart + 8} y={top + 18} className="shell-label" fill="rgba(226,232,240,0.72)">
-        ZOOM
-      </text>
-      <text x={focusStart + 3} y={bottom - 16} className="shell-label" fill="rgba(226,232,240,0.6)">
-        FOCUS
-      </text>
-      <text x={mountX - 22} y={bottom - 16} textAnchor="end" className="shell-mark" fill="rgba(226,232,240,0.7)">
+      <ellipse cx={mountX} cy={STAGE.centerY} rx={7} ry={rearRadius - 18} fill="none" stroke="rgba(203,213,225,0.5)" strokeWidth={2} />
+      <circle cx={mountX - 7} cy={STAGE.centerY + 32} r={2} fill="rgba(248,250,252,0.7)" />
+      <text x={mountX - 28} y={STAGE.centerY + rearRadius - 20} textAnchor="end" className="shell-mark" fill="rgba(226,232,240,0.68)">
         24-200/4-6.3 · {focal}mm
       </text>
+
+      {/* Fixed/extension boundaries make the nesting legible. */}
+      <line x1={rearStart} y1={STAGE.centerY - rearRadius + 10} x2={rearStart} y2={STAGE.centerY + rearRadius - 10} stroke="rgba(94,234,212,0.38)" strokeWidth={1.2} strokeDasharray="3 5" />
+      <line x1={midStart} y1={STAGE.centerY - midRadius + 10} x2={midStart} y2={STAGE.centerY + midRadius - 10} stroke="rgba(94,234,212,0.25)" strokeWidth={1} strokeDasharray="3 5" />
     </g>
   )
 }
