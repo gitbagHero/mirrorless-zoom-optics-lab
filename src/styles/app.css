@@ -1955,3 +1955,263 @@ h3 {
     padding-inline: 12px;
   }
 }
+
+/* I3 zoom control */
+.zoom-control {
+  display: grid;
+  gap: 7px;
+  padding: 11px 16px 10px;
+  border-bottom: 1px solid var(--stage-line);
+  background: var(--stage-2);
+}
+
+.zoom-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.zoom-label {
+  color: #8fa3bb;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.zoom-value {
+  color: #f8fafc;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.zoom-value span {
+  color: #8fa3bb;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.zoom-range {
+  width: 100%;
+  accent-color: #5eead4;
+  cursor: pointer;
+}
+
+.zoom-scale {
+  position: relative;
+  height: 14px;
+  color: #7f93aa;
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.zoom-scale span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.zoom-scale span:first-child {
+  transform: none;
+}
+
+.zoom-scale span:last-child {
+  transform: translateX(-100%);
+}
+
+.zoom-anchor {
+  color: #7f93aa;
+  font-size: 9px;
+}
+
+@media (max-width: 480px) {
+  .zoom-control {
+    padding-inline: 12px;
+  }
+
+  .zoom-anchor {
+    line-height: 1.5;
+  }
+}
+
+/* I3 group motion panel */
+.motion-panel {
+  margin-top: 16px;
+  padding: 20px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.motion-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.motion-head h3 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.motion-meta {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+
+.motion-focal {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.motion-readout {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.motion-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.motion-badge {
+  padding: 4px 8px;
+  border: 1px solid #a6d9d2;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: #134e4a;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.motion-badge-warn {
+  border-color: #e5c48c;
+  background: var(--amber-soft);
+  color: #6b3b0d;
+}
+
+.motion-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.motion-card {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.motion-card.is-linked {
+  border-top-color: var(--violet);
+}
+
+.motion-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.motion-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.motion-count {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.motion-name {
+  margin: 2px 0 6px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.motion-value {
+  margin: 0 0 7px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.motion-value span {
+  margin-left: 2px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.motion-bar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+.motion-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 180ms ease;
+}
+
+.motion-direction {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.motion-footnote {
+  margin: 12px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1080px) {
+  .motion-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .motion-panel {
+    padding: 16px;
+  }
+
+  .motion-head {
+    display: block;
+  }
+
+  .motion-meta {
+    margin-top: 6px;
+    text-align: left;
+  }
+
+  .motion-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

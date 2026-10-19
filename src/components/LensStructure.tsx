@@ -1,17 +1,12 @@
 import type { KeyboardEvent } from 'react'
 import { lensGroups, type GroupId } from '../data/lensGroups'
-import {
-  elementById,
-  lensElements,
-  type ElementTag,
-  type LensElement,
-} from '../data/lensStructure'
+import { elementById, type ElementTag } from '../data/lensStructure'
 import { TAG_META } from '../data/tags'
+import { buildLensLayout, type LensLayout, type PositionedGroup } from '../optics/lensLayout'
 import { STAGE_GEOMETRY as STAGE } from '../optics/stageGeometry'
+import type { Spacing } from '../optics/surfaces'
 import { computeEfl, type RayMode } from '../optics/trace'
 import { RayCanvas } from './RayCanvas'
-
-const WIDE_EFL = computeEfl()
 
 export type ViewMode = 'elements' | 'groups'
 export type Selection =
@@ -26,125 +21,10 @@ type LensStructureProps = {
   showRays: boolean
   onRayModeChange: (mode: RayMode) => void
   onShowRaysChange: (show: boolean) => void
+  spacing: Spacing
+  focal: number
+  onFocalChange: (focal: number) => void
 }
-
-type PositionedElement = LensElement & {
-  groupColor: string
-  startX: number
-  endX: number
-  centerX: number
-  topY: number
-  bottomY: number
-  path: string
-  primaryTag?: ElementTag
-}
-
-type PositionedGroup = {
-  id: GroupId
-  name: string
-  power: '+' | '−'
-  color: string
-  count: number
-  role: string
-  boxLabel: string
-  note?: string
-  minX: number
-  maxX: number
-  centerX: number
-}
-
-type Layout = {
-  elements: PositionedElement[]
-  groups: PositionedGroup[]
-  apertureX: number
-  imageX: number
-}
-
-function sag(radius: number, height: number) {
-  const r2 = radius * radius
-  const y2 = height * height
-  const inside = Math.max(r2 - y2, 0)
-  return radius - Math.sign(radius) * Math.sqrt(inside)
-}
-
-function makeElementPath(
-  startX: number,
-  endX: number,
-  semiHeight: number,
-  r1: number,
-  r2: number,
-) {
-  const points: string[] = []
-  const steps = 24
-  const centerY = STAGE.centerY
-
-  for (let index = 0; index <= steps; index += 1) {
-    const y = -semiHeight + (2 * semiHeight * index) / steps
-    const x = startX + sag(r1, y) * STAGE.axialScale
-    points.push(
-      `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${(centerY + y * STAGE.radialScale).toFixed(2)}`,
-    )
-  }
-
-  for (let index = steps; index >= 0; index -= 1) {
-    const y = -semiHeight + (2 * semiHeight * index) / steps
-    const x = endX + sag(r2, y) * STAGE.axialScale
-    points.push(`L ${x.toFixed(2)} ${(centerY + y * STAGE.radialScale).toFixed(2)}`)
-  }
-
-  return `${points.join(' ')} Z`
-}
-
-function getLayout(): Layout {
-  let cursor = 0
-  const groupColor = new Map(lensGroups.map((group) => [group.id, group.color]))
-
-  const elements: PositionedElement[] = lensElements.map((element) => {
-    const startX = STAGE.x0 + cursor * STAGE.axialScale
-    const endX = startX + element.thickness * STAGE.axialScale
-    const primaryTag = element.tags.find((tag) => tag === 'ED' || tag === 'AS' || tag === 'ASED')
-    const positioned: PositionedElement = {
-      ...element,
-      groupColor: groupColor.get(element.group) ?? '#94a3b8',
-      startX,
-      endX,
-      centerX: (startX + endX) / 2,
-      topY: STAGE.centerY - element.semiHeight * STAGE.radialScale,
-      bottomY: STAGE.centerY + element.semiHeight * STAGE.radialScale,
-      path: makeElementPath(startX, endX, element.semiHeight, element.r1, element.r2),
-      primaryTag,
-    }
-    cursor += element.thickness + element.gapAfter
-    if (element.id === 'L24') {
-      cursor += STAGE.stopGap
-    }
-    return positioned
-  })
-
-  const groups: PositionedGroup[] = lensGroups.map((group) => {
-    const groupElements = elements.filter((element) => element.group === group.id)
-    const first = groupElements[0]
-    const last = groupElements[groupElements.length - 1]
-    return {
-      ...group,
-      minX: first.startX,
-      maxX: last.endX,
-      centerX: (first.startX + last.endX) / 2,
-    }
-  })
-
-  const g3 = groups.find((group) => group.id === 'G3')
-  const apertureX = g3 ? g3.minX - STAGE.stopGap * STAGE.axialScale : 0
-
-  return {
-    elements,
-    groups,
-    apertureX,
-    imageX: STAGE.x0 + cursor * STAGE.axialScale,
-  }
-}
-
-const layout = getLayout()
 
 function onActivate(event: KeyboardEvent<SVGGElement>, action: () => void) {
   if (event.key === 'Enter' || event.key === ' ') {
@@ -189,9 +69,6 @@ function GroupBracket({
       >
         {group.id} {group.power}
       </text>
-      <text x={group.centerX} y={110} textAnchor="middle" className="group-sub-label">
-        {group.name} · {group.count} 片
-      </text>
       <path
         className="group-bracket"
         d={`M ${group.minX} ${y} v ${tick} H ${group.maxX} v -${tick}`}
@@ -205,11 +82,15 @@ function GroupBracket({
 }
 
 function ElementView({
+  layout,
   selection,
   onSelect,
+  showElementLabels,
 }: {
+  layout: LensLayout
   selection: Selection
   onSelect: (selection: Selection) => void
+  showElementLabels: boolean
 }) {
   const selectedElementId = selection.kind === 'element' ? selection.id : undefined
   const selectedGroupId =
@@ -266,33 +147,39 @@ function ElementView({
               stroke="transparent"
               strokeWidth={10}
             />
-            <text x={element.centerX} y={labelY} textAnchor="middle" className="element-label">
-              {element.id}
-            </text>
-            {tag ? (
-              <text
-                x={element.centerX}
-                y={STAGE.tagLabelTop}
-                textAnchor="middle"
-                className="element-tag"
-                fill={tag.color}
-              >
-                {tag.label}
-              </text>
+            {showElementLabels ? (
+              <>
+                <text x={element.centerX} y={labelY} textAnchor="middle" className="element-label">
+                  {element.id}
+                </text>
+                {tag ? (
+                  <text
+                    x={element.centerX}
+                    y={STAGE.tagLabelTop}
+                    textAnchor="middle"
+                    className="element-tag"
+                    fill={tag.color}
+                  >
+                    {tag.label}
+                  </text>
+                ) : null}
+              </>
             ) : null}
           </g>
         )
       })}
 
-      <ApertureAndPlane />
+      <ApertureAndPlane layout={layout} />
     </g>
   )
 }
 
 function GroupView({
+  layout,
   selection,
   onSelect,
 }: {
+  layout: LensLayout
   selection: Selection
   onSelect: (selection: Selection) => void
 }) {
@@ -358,12 +245,12 @@ function GroupView({
         )
       })}
 
-      <ApertureAndPlane />
+      <ApertureAndPlane layout={layout} />
     </g>
   )
 }
 
-function ApertureAndPlane() {
+function ApertureAndPlane({ layout }: { layout: LensLayout }) {
   return (
     <g>
       <line
@@ -484,9 +371,46 @@ export function LensStructure({
   showRays,
   onRayModeChange,
   onShowRaysChange,
+  spacing,
+  focal,
+  onFocalChange,
 }: LensStructureProps) {
+  const layout = buildLensLayout(spacing)
+  const efl = computeEfl(spacing)
+
   return (
     <div className="structure-wrap" data-testid="lens-structure">
+      <div className="zoom-control">
+        <div className="zoom-head">
+          <span className="zoom-label">FOCAL LENGTH / 焦距</span>
+          <output className="zoom-value" htmlFor="focal-range">
+            {focal} <span>mm</span>
+          </output>
+        </div>
+        <input
+          id="focal-range"
+          className="zoom-range"
+          type="range"
+          aria-label="焦距"
+          min={24}
+          max={200}
+          step={1}
+          value={focal}
+          onChange={(event) => onFocalChange(Number(event.target.value))}
+        />
+        <div className="zoom-scale" aria-hidden="true">
+          {[24, 35, 50, 70, 105, 135, 200].map((value) => (
+            <span
+              key={value}
+              style={{ left: `${((value - 24) / (200 - 24)) * 100}%` }}
+            >
+              {value}
+            </span>
+          ))}
+        </div>
+        <span className="zoom-anchor">UI 24–200 mm · 专利锚点 24.7 / 50 / 105 / 194</span>
+      </div>
+
       <div className="ray-toolbar">
         <span className="ray-toolbar-label">光路</span>
         <div className="ray-mode-group" role="group" aria-label="光线预设">
@@ -515,13 +439,13 @@ export function LensStructure({
           显示光线
         </label>
         <span className="ray-efl" data-testid="efl-value">
-          EFL {WIDE_EFL.toFixed(2)} mm
+          EFL {efl.toFixed(2)} mm
         </span>
       </div>
 
       <div className="stage-scroll">
         <div className="structure-canvas-wrap">
-          <RayCanvas mode={rayMode} showRays={showRays} />
+          <RayCanvas mode={rayMode} showRays={showRays} spacing={spacing} />
           <svg
             className="structure-svg"
             viewBox={`0 0 ${STAGE.width} ${STAGE.height}`}
@@ -555,9 +479,9 @@ export function LensStructure({
             />
 
             {viewMode === 'elements' ? (
-              <ElementView selection={selection} onSelect={onSelect} />
+              <ElementView layout={layout} selection={selection} onSelect={onSelect} showElementLabels={focal <= 105} />
             ) : (
-              <GroupView selection={selection} onSelect={onSelect} />
+              <GroupView layout={layout} selection={selection} onSelect={onSelect} />
             )}
 
             <text x="34" y="420" className="stage-annotation-text">

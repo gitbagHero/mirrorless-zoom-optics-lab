@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test'
 
-test('renders the I2 ray lab and the 19-element structure', async ({ page }) => {
+test('renders the I3 zoom lab and the 19-element structure', async ({ page }) => {
   await page.goto('/')
 
   await expect(page).toHaveTitle(/Mirrorless Zoom Optics Lab/)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('24–200mm')
   await expect(page.getByTestId('lens-structure')).toBeVisible()
-  await expect(page.getByText('I2 RAYS')).toBeVisible()
+  await expect(page.getByText('I3 ZOOM')).toBeVisible()
   await expect(page.getByTestId('element-L11')).toBeVisible()
   await expect(page.getByTestId('element-L62')).toBeVisible()
   await expect(page.locator('[data-testid^="element-"]')).toHaveCount(19)
@@ -34,6 +34,29 @@ test('selects an element and switches between 19 elements and 6 groups', async (
 
   await page.getByRole('button', { name: '19 片结构' }).click()
   await expect(page.getByTestId('element-L11')).toBeVisible()
+})
+
+test('moves the six groups across the zoom range', async ({ page }) => {
+  await page.goto('/')
+
+  const slider = page.getByRole('slider', { name: '焦距' })
+  await expect(slider).toHaveValue('24')
+  await expect(page.getByTestId('efl-value')).toContainText('24.70')
+  await expect(page.getByTestId('motion-G1')).toContainText('0.0')
+
+  await slider.focus()
+  await page.keyboard.press('End')
+  await expect(slider).toHaveValue('200')
+  await expect(page.locator('.zoom-value')).toContainText('200')
+  await expect(page.getByTestId('efl-value')).toContainText('194.00')
+  await expect(page.getByTestId('motion-G1')).toContainText('69.8')
+  await expect(page.getByTestId('motion-G3')).toContainText('31.0')
+  await expect(page.getByTestId('motion-G6')).toContainText('31.0')
+
+  await page.keyboard.press('Home')
+  await expect(slider).toHaveValue('24')
+  await expect(page.getByTestId('efl-value')).toContainText('24.70')
+  await expect(page.getByTestId('motion-G1')).toContainText('0.0')
 })
 
 test('switches ray presets and toggles the ray layer', async ({ page }) => {

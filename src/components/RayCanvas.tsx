@@ -1,13 +1,15 @@
 import { useEffect, useRef } from 'react'
 import { STAGE_GEOMETRY, toStageX, toStageY } from '../optics/stageGeometry'
+import type { Spacing } from '../optics/surfaces'
 import { traceBundle, type RayMode } from '../optics/trace'
 
 type RayCanvasProps = {
   mode: RayMode
   showRays: boolean
+  spacing: Spacing
 }
 
-export function RayCanvas({ mode, showRays }: RayCanvasProps) {
+export function RayCanvas({ mode, showRays, spacing }: RayCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export function RayCanvas({ mode, showRays }: RayCanvasProps) {
       context.clearRect(0, 0, canvas.width, canvas.height)
       if (!showRays) return
 
-      const bundle = traceBundle(mode)
+      const bundle = traceBundle(mode, spacing)
       context.setTransform(
         canvas.width / STAGE_GEOMETRY.width,
         0,
@@ -51,7 +53,7 @@ export function RayCanvas({ mode, showRays }: RayCanvasProps) {
         const visible = ray.valid && !ray.clipped
         context.beginPath()
         ray.points.forEach((point, index) => {
-          const x = toStageX(point.z)
+          const x = toStageX(point.z, bundle.imageZ)
           const y = toStageY(point.y)
           if (index === 0) context.moveTo(x, y)
           else context.lineTo(x, y)
@@ -67,7 +69,7 @@ export function RayCanvas({ mode, showRays }: RayCanvasProps) {
         const last = ray.points[ray.points.length - 1]
         if (last.image && visible) {
           context.beginPath()
-          context.arc(toStageX(last.z), toStageY(last.y), 2.6, 0, Math.PI * 2)
+          context.arc(toStageX(last.z, bundle.imageZ), toStageY(last.y), 2.6, 0, Math.PI * 2)
           context.fillStyle = ray.color
           context.globalAlpha = 0.95
           context.fill()
@@ -85,7 +87,7 @@ export function RayCanvas({ mode, showRays }: RayCanvasProps) {
     draw()
 
     return () => observer.disconnect()
-  }, [mode, showRays])
+  }, [mode, showRays, spacing])
 
   return (
     <canvas
