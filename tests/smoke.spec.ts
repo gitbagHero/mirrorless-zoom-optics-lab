@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test'
 
-test('renders the I4 focus lab and the 19-element structure', async ({ page }) => {
+test('renders the I5 guide and the 19-element structure', async ({ page }) => {
   await page.goto('/')
 
   await expect(page).toHaveTitle(/Mirrorless Zoom Optics Lab/)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('24–200mm')
   await expect(page.getByTestId('lens-structure')).toBeVisible()
-  await expect(page.getByText('I4 FOCUS')).toBeVisible()
+  await expect(page.getByText('I5 BUILD')).toBeVisible()
   await expect(page.getByTestId('element-L11')).toBeVisible()
   await expect(page.getByTestId('element-L62')).toBeVisible()
   await expect(page.locator('[data-testid^="element-"]')).toHaveCount(19)
@@ -57,6 +57,25 @@ test('moves the six groups across the zoom range', async ({ page }) => {
   await expect(slider).toHaveValue('24')
   await expect(page.getByTestId('efl-value')).toContainText('24.70')
   await expect(page.getByTestId('motion-G1')).toContainText('0.0')
+})
+
+test('guide presets drive the workbench and open the model notes', async ({ page }) => {
+  await page.goto('/')
+
+  await page.getByTestId('guide-try-zoom').click()
+  await expect(page.locator('#focal-range')).toHaveValue('200')
+  await expect(page.getByRole('button', { name: '6 组功能' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await expect(page.getByTestId('inspector-selection')).toContainText('G5')
+
+  await page.getByTestId('guide-try-elements').click()
+  await expect(page.locator('#focal-range')).toHaveValue('50')
+  await expect(page.getByTestId('inspector-selection')).toContainText('L12')
+
+  await page.getByTestId('guide-try-model').click()
+  await expect(page.locator('#data-notes details')).toHaveAttribute('open', '')
 })
 
 test('focuses manually and with AF-S / AF-C', async ({ page }) => {

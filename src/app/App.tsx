@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { DataNotes } from '../components/DataNotes'
 import { FocusPanel } from '../components/FocusPanel'
+import { GuideSection } from '../components/GuideSection'
 import { GroupMotionPanel } from '../components/GroupMotionPanel'
 import { LensInspector } from '../components/LensInspector'
 import { LensStructure, type Selection, type ViewMode } from '../components/LensStructure'
@@ -8,6 +9,7 @@ import { elementById } from '../data/lensStructure'
 import { useFocusController } from '../hooks/useFocusController'
 import { spacingAtFocal } from '../optics/zoom'
 import type { RayMode } from '../optics/trace'
+import type { GuidePreset } from '../data/guide'
 import { lensSpec } from '../data/specs'
 
 const ROADMAP = [
@@ -15,9 +17,9 @@ const ROADMAP = [
   { id: 'I1', title: '19 片结构与六组', status: 'done', note: '已完成' },
   { id: 'I2', title: '光路引擎', status: 'done', note: '已完成' },
   { id: 'I3', title: '变焦运动', status: 'done', note: '已完成' },
-  { id: 'I4', title: '对焦与合成成像', status: 'active', note: '当前' },
-  { id: 'I5', title: '分章导览', status: 'queued', note: '下一步' },
-  { id: 'I6', title: '发布硬化与 v1.0', status: 'queued', note: '待开始' },
+  { id: 'I4', title: '对焦与合成成像', status: 'done', note: '已完成' },
+  { id: 'I5', title: '分章导览', status: 'active', note: '当前' },
+  { id: 'I6', title: '发布硬化与 v1.0', status: 'queued', note: '下一步' },
 ] as const
 
 const REPO_URL = 'https://github.com/gitbagHero/mirrorless-zoom-optics-lab'
@@ -41,11 +43,73 @@ function App() {
   const [focal, setFocal] = useState(24)
   const spacing = spacingAtFocal(focal)
   const focus = useFocusController(focal, spacing)
+  const [dataNotesOpen, setDataNotesOpen] = useState(false)
 
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode)
     if (mode === 'groups' && selection.kind === 'element') {
       setSelection({ kind: 'group', id: elementById[selection.id].group })
+    }
+  }
+
+  const scrollToSection = (id: string) => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({
+        behavior: reduced ? 'auto' : 'smooth',
+        block: 'start',
+      })
+    })
+  }
+
+  const handleGuidePreset = (preset: GuidePreset) => {
+    switch (preset) {
+      case 'structure':
+        setFocal(24)
+        setViewMode('elements')
+        setSelection({ kind: 'group', id: 'G1' })
+        setShowRays(false)
+        setRayMode('onAxis')
+        scrollToSection('workbench')
+        break
+      case 'zoom':
+        setFocal(200)
+        setViewMode('groups')
+        setSelection({ kind: 'group', id: 'G5' })
+        setShowRays(true)
+        setRayMode('fan')
+        scrollToSection('workbench')
+        break
+      case 'focus':
+        setFocal(105)
+        setViewMode('elements')
+        setSelection({ kind: 'group', id: 'G5' })
+        setShowRays(true)
+        setRayMode('onAxis')
+        focus.setTargetDistance(4)
+        focus.setMode('AF-C')
+        scrollToSection('focus')
+        break
+      case 'autofocus':
+        setFocal(200)
+        setSelection({ kind: 'group', id: 'G5' })
+        setShowRays(true)
+        focus.setTargetDistance(4)
+        focus.setMode('AF-C')
+        scrollToSection('focus')
+        break
+      case 'elements':
+        setFocal(50)
+        setViewMode('elements')
+        setSelection({ kind: 'element', id: 'L12' })
+        setShowRays(true)
+        setRayMode('onAxis')
+        scrollToSection('workbench')
+        break
+      case 'model':
+        setDataNotesOpen(true)
+        scrollToSection('data-notes')
+        break
     }
   }
 
@@ -68,13 +132,14 @@ function App() {
           <nav className="site-nav" aria-label="主导航">
             <a href="#workbench">工作台</a>
             <a href="#focus">对焦</a>
+            <a href="#guide">导览</a>
             <a href="#principles">怎么读</a>
             <a href="#roadmap">路线</a>
             <a href="#data-notes">数据说明</a>
           </nav>
 
           <div className="header-meta">
-            <span className="build-badge">v0.5 · I4</span>
+            <span className="build-badge">v0.6 · I5</span>
             <a className="ghost-link" href={REPO_URL} target="_blank" rel="noreferrer">
               GitHub
             </a>
@@ -85,7 +150,7 @@ function App() {
       <main id="top">
         <section className="hero section-shell" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="eyebrow">OPTICS LAB / BUILD 0.5</p>
+            <p className="eyebrow">OPTICS LAB / BUILD 0.6</p>
             <h1 id="hero-title">
               <span className="hero-line">把一支 24–200mm</span>
               <span className="hero-line">变焦镜头，</span>
@@ -116,7 +181,7 @@ function App() {
           <aside className="spec-card" aria-label="镜头关键数据">
             <div className="spec-card-head">
               <span className="eyebrow">LENS / SPEC</span>
-              <span className="status-dot">I4</span>
+              <span className="status-dot">I5</span>
             </div>
             <p className="spec-name">{lensSpec.shortName}</p>
             <div className="spec-metrics">
@@ -165,7 +230,7 @@ function App() {
               <h2 id="workbench-title">光学工作台</h2>
             </div>
             <p className="section-note">
-              I4 已接入 G5 内对焦、手动 / AF-S / AF-C 与合成目标图；I5 接分章导览与解释内容。
+              I5 已把操作串成六章导览与术语速查；I6 做跨浏览器、无障碍与 v1.0 发布硬化。
             </p>
           </div>
 
@@ -176,7 +241,7 @@ function App() {
                   <span className="stage-title">镜头侧视 / 19 片结构</span>
                   <span className="stage-subtitle">专利实施例 8 · 点击镜片或组</span>
                 </div>
-                <span className="stage-status">I4 FOCUS</span>
+                <span className="stage-status">I5 BUILD</span>
               </div>
               <LensStructure
                 viewMode={viewMode}
@@ -210,6 +275,8 @@ function App() {
         </section>
 
         <FocusPanel controller={focus} focal={focal} />
+
+        <GuideSection onTryThis={handleGuidePreset} />
 
         <section className="principles section-shell" id="principles" aria-labelledby="principles-title">
           <div className="section-head">
@@ -270,7 +337,7 @@ function App() {
           </div>
         </section>
 
-        <DataNotes />
+        <DataNotes open={dataNotesOpen} onOpenChange={setDataNotesOpen} />
       </main>
 
       <footer className="site-footer">
@@ -280,7 +347,7 @@ function App() {
             <p>非官方、非商业教学演示。基于公开专利与官方规格，不是量产镜头精确仿真。</p>
           </div>
           <div className="footer-meta">
-            <span>v0.5 · I4</span>
+            <span>v0.6 · I5</span>
             <a href={PLAN_URL} target="_blank" rel="noreferrer">
               开发计划
             </a>
