@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { DataNotes } from '../components/DataNotes'
-import { LensStagePreview } from '../components/LensStagePreview'
+import { LensInspector } from '../components/LensInspector'
+import { LensStructure, type Selection, type ViewMode } from '../components/LensStructure'
+import { elementById } from '../data/lensStructure'
 import { lensSpec } from '../data/specs'
 
 const ROADMAP = [
-  { id: 'I0', title: '基础与设计系统', status: 'active', note: '当前' },
-  { id: 'I1', title: '19 片结构与六组', status: 'queued', note: '下一步' },
-  { id: 'I2', title: '光路引擎', status: 'queued', note: '待开始' },
+  { id: 'I0', title: '基础与设计系统', status: 'done', note: '已完成' },
+  { id: 'I1', title: '19 片结构与六组', status: 'active', note: '当前' },
+  { id: 'I2', title: '光路引擎', status: 'queued', note: '下一步' },
   { id: 'I3', title: '变焦运动', status: 'queued', note: '待开始' },
   { id: 'I4', title: '对焦与合成成像', status: 'queued', note: '待开始' },
   { id: 'I5', title: '分章导览', status: 'queued', note: '待开始' },
@@ -26,6 +29,16 @@ function BrandMark() {
 }
 
 function App() {
+  const [viewMode, setViewMode] = useState<ViewMode>('elements')
+  const [selection, setSelection] = useState<Selection>({ kind: 'group', id: 'G1' })
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode)
+    if (mode === 'groups' && selection.kind === 'element') {
+      setSelection({ kind: 'group', id: elementById[selection.id].group })
+    }
+  }
+
   return (
     <div className="app">
       <a className="skip-link" href="#workbench">
@@ -50,7 +63,7 @@ function App() {
           </nav>
 
           <div className="header-meta">
-            <span className="build-badge">v0.1 · I0</span>
+            <span className="build-badge">v0.2 · I1</span>
             <a className="ghost-link" href={REPO_URL} target="_blank" rel="noreferrer">
               GitHub
             </a>
@@ -61,7 +74,7 @@ function App() {
       <main id="top">
         <section className="hero section-shell" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="eyebrow">OPTICS LAB / BUILD 0.1</p>
+            <p className="eyebrow">OPTICS LAB / BUILD 0.2</p>
             <h1 id="hero-title">
               <span className="hero-line">把一支 24–200mm</span>
               <span className="hero-line">变焦镜头，</span>
@@ -92,7 +105,7 @@ function App() {
           <aside className="spec-card" aria-label="镜头关键数据">
             <div className="spec-card-head">
               <span className="eyebrow">LENS / SPEC</span>
-              <span className="status-dot">I0</span>
+              <span className="status-dot">I1</span>
             </div>
             <p className="spec-name">{lensSpec.shortName}</p>
             <div className="spec-metrics">
@@ -141,7 +154,7 @@ function App() {
               <h2 id="workbench-title">光学工作台</h2>
             </div>
             <p className="section-note">
-              I0 先交付舞台与状态骨架；I1 接入 19 片结构，I3/I4 接入变焦与对焦。
+              I1 已接入 19 片专利处方结构与六组双视图；I2 接光路，I3/I4 接变焦与对焦。
             </p>
           </div>
 
@@ -149,55 +162,28 @@ function App() {
             <article className="stage-card" aria-label="镜头光路静态预览">
               <div className="stage-topbar">
                 <div>
-                  <span className="stage-title">镜头侧视 / 静态预览</span>
-                  <span className="stage-subtitle">六组功能分区 · 非交互</span>
+                  <span className="stage-title">镜头侧视 / 19 片结构</span>
+                  <span className="stage-subtitle">专利实施例 8 · 点击镜片或组</span>
                 </div>
-                <span className="stage-status">I0 SKELETON</span>
+                <span className="stage-status">I1 STRUCTURE</span>
               </div>
-              <LensStagePreview />
+              <LensStructure
+                viewMode={viewMode}
+                selection={selection}
+                onSelect={setSelection}
+              />
               <div className="stage-footer">
                 <span className="pulse-dot" aria-hidden="true" />
-                <span>当前是示意结构；19 片处方与逐面折射会在 I1–I2 接入。</span>
+                <span>轴向间距压缩，形状按专利半径绘制；I2 接入逐面折射与实际光线。</span>
               </div>
             </article>
 
-            <aside className="control-rail" aria-label="工作台状态">
-              <div className="rail-section">
-                <p className="eyebrow">CURRENT BUILD</p>
-                <h3>基础与设计系统</h3>
-                <p className="rail-copy">
-                  页面外壳、暗色光学舞台、数据说明和测试/部署链路已经就位。下一批开始绘制真实结构。
-                </p>
-              </div>
-
-              <div className="status-list">
-                <div>
-                  <span>模型</span>
-                  <strong>{lensSpec.modelLabel}</strong>
-                </div>
-                <div>
-                  <span>结构</span>
-                  <strong>19 片 / 15 组</strong>
-                </div>
-                <div>
-                  <span>当前增量</span>
-                  <strong>I0 / 7</strong>
-                </div>
-                <div>
-                  <span>下一步</span>
-                  <strong>I1 结构图</strong>
-                </div>
-              </div>
-
-              <div className="next-callout">
-                <span className="next-index">NEXT</span>
-                <p>19 片专利处方结构、六组括号、ED/AS/ASED 徽标和双视图切换。</p>
-              </div>
-
-              <a className="button button-secondary button-wide" href="#data-notes">
-                查看模型边界
-              </a>
-            </aside>
+            <LensInspector
+              viewMode={viewMode}
+              selection={selection}
+              onViewModeChange={handleViewModeChange}
+              onSelect={setSelection}
+            />
           </div>
         </section>
 
@@ -270,7 +256,7 @@ function App() {
             <p>非官方、非商业教学演示。基于公开专利与官方规格，不是量产镜头精确仿真。</p>
           </div>
           <div className="footer-meta">
-            <span>v0.1 · I0</span>
+            <span>v0.2 · I1</span>
             <a href={PLAN_URL} target="_blank" rel="noreferrer">
               开发计划
             </a>
