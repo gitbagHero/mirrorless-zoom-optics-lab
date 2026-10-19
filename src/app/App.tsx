@@ -40,7 +40,7 @@ function App() {
   const [selection, setSelection] = useState<Selection>({ kind: 'group', id: 'G1' })
   const [rayMode, setRayMode] = useState<RayMode>('onAxis')
   const [showRays, setShowRays] = useState(true)
-  const [showShell, setShowShell] = useState(true)
+  const [showShell, setShowShell] = useState(false)
   const [focal, setFocal] = useState(24)
   const [workbenchTab, setWorkbenchTab] = useState<WorkbenchTab>('structure')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(readCollapsed)
@@ -92,6 +92,7 @@ function App() {
 
   const startEnter = () => {
     if (entering) return
+    setShowShell(false)
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduced) {
       navigate('workbench')

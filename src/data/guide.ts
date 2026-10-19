@@ -109,7 +109,7 @@ export const guideChapters: GuideChapter[] = [
     points: [
       'UI 焦距 24–200 mm 对应专利锚点 24.7 / 50 / 105 / 194 mm。',
       '轴向按专利间距，径向比例放大；光路是二维子午面追迹。',
-      '合成目标图用于演示离焦，不是真实照片或实测样张。',
+      '对焦组位移图使用归一化行程，实际位移以 mm 读数为准。',
     ],
     tryLabel: '打开数据说明',
     preset: 'model',

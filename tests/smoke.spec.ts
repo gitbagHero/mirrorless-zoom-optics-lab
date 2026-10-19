@@ -26,6 +26,8 @@ test('renders the landing and enters the workbench', async ({ page }) => {
   await expect(page.locator('[data-testid^="element-"]')).toHaveCount(19)
   await expect(page.getByTestId('ray-canvas')).toBeVisible()
   await expect(page.getByTestId('efl-value')).toContainText('24.70')
+  await expect(page.getByLabel('外壳')).not.toBeChecked()
+  await expect(page.getByTestId('lens-shell')).toHaveCount(0)
   await expect(page.locator('.landing-page')).toHaveCount(0)
 
   await page.getByRole('link', { name: '返回起始页' }).click()
@@ -122,26 +124,30 @@ test('focuses manually and with AF-S / AF-C', async ({ page }) => {
   await page.goto('/#focus')
 
   const status = page.getByTestId('focus-status')
-  const clarity = page.getByTestId('focus-clarity')
+  const viewer = page.getByTestId('focus-group-viewer')
   await expect(status).toHaveText('合焦')
-  await expect(clarity).toHaveText('100%')
-  await expect(page.getByTestId('target-scene')).toBeVisible()
+  await expect(viewer).toBeVisible()
+  const initialPosition = Number(await viewer.getAttribute('data-position'))
+  expect(initialPosition).toBeGreaterThan(0)
+  expect(initialPosition).toBeLessThan(1)
 
   const manual = page.getByRole('slider', { name: '手动对焦' })
   await manual.press('End')
   await expect(status).toHaveText('离焦')
-  await expect(clarity).toHaveText('0%')
+  await expect(viewer).toHaveAttribute('data-position', '1.000')
 
   await page.getByRole('button', { name: /AF-S 单次对焦/ }).click()
   await expect(status).toHaveText('合焦', { timeout: 3000 })
-  await expect(clarity).toHaveText('100%')
+  await expect(Number(await viewer.getAttribute('data-position'))).toBeCloseTo(initialPosition, 2)
 
   await page.getByRole('button', { name: /近景/ }).click()
   await expect(status).toHaveText('合焦', { timeout: 3000 })
+  await expect(Number(await viewer.getAttribute('data-position'))).toBeGreaterThan(0.95)
 
   await page.getByRole('button', { name: /连续 AF-C/ }).click()
   await page.getByRole('button', { name: /远景 20 m/ }).click()
   await expect(status).toHaveText('合焦', { timeout: 3000 })
+  await expect(Number(await viewer.getAttribute('data-position'))).toBeLessThan(0.1)
 })
 
 test('switches ray presets and toggles the ray layer', async ({ page }) => {
@@ -177,6 +183,9 @@ test('toggles the lens shell and moves its front with zoom', async ({ page }) =>
   await page.goto('/#workbench')
 
   const shell = page.getByTestId('lens-shell')
+  await expect(shell).toHaveCount(0)
+  const shellToggle = page.getByLabel('外壳')
+  await shellToggle.check()
   await expect(shell).toBeVisible()
   const frontAt24 = Number(await shell.getAttribute('data-front-x'))
   const g1At24 = Number(await shell.getAttribute('data-g1-front'))
@@ -200,11 +209,8 @@ test('toggles the lens shell and moves its front with zoom', async ({ page }) =>
   expect(frontLength200).toBe(frontLength24)
   expect(midLength200).toBe(midLength24)
 
-  const shellToggle = page.getByLabel('外壳')
   await shellToggle.uncheck()
   await expect(shell).toHaveCount(0)
-  await shellToggle.check()
-  await expect(page.getByTestId('lens-shell')).toBeVisible()
 })
 
 test('collapses the sidebar and persists the state', async ({ page }) => {

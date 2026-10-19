@@ -1,6 +1,6 @@
 import type { FocusController, FocusMode } from '../hooks/useFocusController'
 import { ModuleHeader } from './ModuleHeader'
-import { TargetScene } from './TargetScene'
+import { FocusGroupViewer } from './FocusGroupViewer'
 
 type FocusPanelProps = {
   controller: FocusController
@@ -26,8 +26,6 @@ export function FocusPanel({ controller, focal }: FocusPanelProps) {
     mfd,
     currentOffset,
     idealOffset,
-    blurPx,
-    clarity,
     status,
     setManualPosition,
     startAfS,
@@ -167,7 +165,7 @@ export function FocusPanel({ controller, focal }: FocusPanelProps) {
         <div className="focus-preview">
           <div className="preview-head">
             <div>
-              <span className="focus-block-label">传感器看到的目标</span>
+              <span className="focus-block-label">G5 对焦组运动</span>
               <span
                 className={`focus-status ${status === '合焦' ? 'is-sharp' : ''}`}
                 data-testid="focus-status"
@@ -183,17 +181,12 @@ export function FocusPanel({ controller, focal }: FocusPanelProps) {
             </span>
           </div>
 
-          <TargetScene blurPx={blurPx} targetDistance={targetDistance} />
+          <FocusGroupViewer controller={controller} focal={focal} />
 
-          <div className="clarity-row">
-            <div className="clarity-bar" role="progressbar" aria-label="清晰度" aria-valuenow={clarity} aria-valuemin={0} aria-valuemax={100}>
-              <i style={{ width: `${clarity}%` }} />
-            </div>
-            <span data-testid="focus-clarity">{clarity}%</span>
-          </div>
-          <div className="preview-meta">
-            <span>离焦模糊 {blurPx.toFixed(1)} px</span>
-            <span>AF 状态 {afState}</span>
+          <div className="focus-viewer-legend">
+            <span><i className="legend-current" />当前 G5</span>
+            <span><i className="legend-target" />目标位置</span>
+            <span>归一化行程 · 实际位移以 mm 为准</span>
           </div>
         </div>
       </div>

@@ -67,14 +67,6 @@ export function requiredFocusOffset(
   return clamp(imageShift / nearShift, 0, 1) * travel
 }
 
-export function blurPixels(focusPosition: number, idealPosition: number) {
-  return Math.min(12, Math.abs(focusPosition - idealPosition) * 90)
-}
-
-export function clarityPercent(focusPosition: number, idealPosition: number) {
-  return Math.round(clamp(1 - Math.abs(focusPosition - idealPosition) / 0.45, 0, 1) * 100)
-}
-
 export function focusStatus(focusPosition: number, idealPosition: number) {
   const error = Math.abs(focusPosition - idealPosition)
   if (error < 0.02) return '合焦'

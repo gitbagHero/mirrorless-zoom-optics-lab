@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  blurPixels,
-  clarityPercent,
   effectiveTargetDistance,
   focusStatus,
   focusTravelAtFocal,
@@ -58,8 +56,6 @@ export function useFocusController(focal: number, spacing: Spacing) {
   const idealOffset = requiredFocusOffset(focal, effectiveTarget, spacing)
   const idealPosition = clamp(idealOffset / travel, 0, 1)
   const currentOffset = travel * position
-  const blurPx = blurPixels(position, idealPosition)
-  const clarity = clarityPercent(position, idealPosition)
   const status = focusStatus(position, idealPosition)
 
   const animateTo = useCallback(
@@ -186,8 +182,6 @@ export function useFocusController(focal: number, spacing: Spacing) {
     currentOffset,
     idealOffset,
     idealPosition,
-    blurPx,
-    clarity,
     status,
     focusSpacing,
     setManualPosition,

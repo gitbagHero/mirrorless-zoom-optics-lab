@@ -4263,3 +4263,201 @@ body,
     transition: none !important;
   }
 }
+
+/* Focus group movement viewer */
+
+.focus-group-viewer {
+  overflow: hidden;
+  border: 1px solid #17263b;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 52% 46%, rgba(52, 211, 153, 0.08), transparent 36%),
+    #071426;
+}
+
+.focus-group-viewer svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.focus-viewer-kicker,
+.focus-viewer-title,
+.focus-viewer-mode,
+.focus-viewer-label,
+.focus-viewer-foot,
+.focus-travel-label,
+.focus-travel-readout,
+.focus-g5-label {
+  font-family: var(--font-mono);
+}
+
+.focus-viewer-kicker {
+  fill: #5eead4;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.focus-viewer-title {
+  fill: #e2e8f0;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.focus-viewer-mode {
+  fill: #94a3b8;
+  font-size: 9px;
+}
+
+.focus-viewer-axis {
+  stroke: rgba(148, 197, 255, 0.28);
+  stroke-dasharray: 4 9;
+}
+
+.focus-fixed-group rect {
+  fill: rgba(148, 163, 184, 0.06);
+  stroke: rgba(148, 163, 184, 0.38);
+  stroke-width: 1.1;
+  stroke-dasharray: 4 4;
+}
+
+.focus-fixed-group text {
+  fill: rgba(203, 213, 225, 0.66);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.focus-fixed-group .focus-fixed-sub {
+  fill: rgba(148, 163, 184, 0.55);
+  font-size: 7px;
+  font-weight: 500;
+}
+
+.focus-image-plane {
+  stroke: #e2e8f0;
+  stroke-width: 2;
+}
+
+.focus-zero-line {
+  stroke: rgba(203, 213, 225, 0.3);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+
+.focus-viewer-label {
+  fill: rgba(203, 213, 225, 0.6);
+  font-size: 9px;
+}
+
+.focus-ideal-line {
+  stroke: rgba(94, 234, 212, 0.55);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 5;
+}
+
+.focus-ideal-label {
+  fill: #5eead4;
+  font-family: var(--font-mono);
+  font-size: 8px;
+}
+
+.focus-g5-bracket {
+  fill: rgba(52, 211, 153, 0.06);
+  stroke: rgba(52, 211, 153, 0.38);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.focus-g5-lens {
+  fill: url(#g5-lens);
+  stroke: #34d399;
+  stroke-width: 1.6;
+}
+
+.focus-g5-lens-second {
+  fill: rgba(52, 211, 153, 0.16);
+  stroke: #6ee7b7;
+}
+
+.focus-g5-axis {
+  stroke: rgba(226, 232, 240, 0.35);
+  stroke-width: 1;
+}
+
+.focus-g5-label {
+  fill: #a7f3d0;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.focus-travel-rail line {
+  stroke: rgba(148, 163, 184, 0.34);
+  stroke-width: 1.5;
+}
+
+.focus-travel-rail .focus-travel-fill {
+  stroke: #34d399;
+  stroke-width: 3;
+}
+
+.focus-travel-knob {
+  fill: #a7f3d0;
+  stroke: #071426;
+  stroke-width: 2;
+}
+
+.focus-travel-label {
+  fill: rgba(203, 213, 225, 0.55);
+  font-size: 8px;
+}
+
+.focus-travel-readout {
+  fill: #a7f3d0;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.focus-viewer-foot {
+  fill: rgba(148, 163, 184, 0.7);
+  font-size: 8px;
+}
+
+.focus-viewer-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.focus-viewer-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.focus-viewer-legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.focus-viewer-legend .legend-current {
+  background: #34d399;
+}
+
+.focus-viewer-legend .legend-target {
+  border: 1px dashed #5eead4;
+  background: transparent;
+}
+
+@media (max-width: 900px) {
+  .focus-group-viewer {
+    max-width: 640px;
+    margin-inline: auto;
+  }
+}
