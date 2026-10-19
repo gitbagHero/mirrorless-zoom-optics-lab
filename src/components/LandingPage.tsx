@@ -9,17 +9,17 @@ type LandingPageProps = {
 type Tilt = { x: number; y: number }
 
 export function LandingPage({ exiting, onEnter }: LandingPageProps) {
-  const [tilt, setTilt] = useState<Tilt>({ x: -4, y: -10 })
+  const [tilt, setTilt] = useState<Tilt>({ x: -1.5, y: -3 })
 
   const handlePointerMove = (event: PointerEvent<HTMLButtonElement>) => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const rect = event.currentTarget.getBoundingClientRect()
     const px = (event.clientX - rect.left) / rect.width - 0.5
     const py = (event.clientY - rect.top) / rect.height - 0.5
-    setTilt({ x: -4 - py * 4, y: -10 + px * 8 })
+    setTilt({ x: -1.5 - py * 2, y: -3 + px * 5 })
   }
 
-  const resetTilt = () => setTilt({ x: -4, y: -10 })
+  const resetTilt = () => setTilt({ x: -1.5, y: -3 })
 
   return (
     <main className={`landing-page ${exiting ? 'is-exiting' : ''}`}>

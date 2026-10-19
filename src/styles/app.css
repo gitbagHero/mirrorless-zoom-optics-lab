@@ -3732,7 +3732,7 @@ body,
   position: relative;
   display: block;
   width: 100%;
-  aspect-ratio: 920 / 360;
+  aspect-ratio: 960 / 380;
   transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
   transform-style: preserve-3d;
   transition: transform 180ms ease-out;
@@ -4230,7 +4230,7 @@ body,
   }
 
   .landing-lens {
-    aspect-ratio: 920 / 360;
+    aspect-ratio: 960 / 380;
   }
 
   .landing-lens-body {
