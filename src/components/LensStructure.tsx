@@ -121,11 +121,18 @@ function ShellTube({
 }
 
 function LensShell({ layout, focal }: { layout: LensLayout; focal: number }) {
-  const frontX = Math.min(...layout.elements.map((element) => element.startX)) - 12
   const mountX = layout.imageX - 16 * STAGE.axialScale
-  const rearStart = mountX - 240
-  const midStart = rearStart - 170
-  const frontEnd = midStart + 22
+  const extension = ((focal - 24) / (200 - 24)) * 300
+
+  // Two moving sleeves, both with fixed physical lengths. The front sleeve
+  // travels at 1.0x and the mid sleeve at 0.65x, so their overlap changes.
+  const frontLength = 200
+  const midLength = 300
+  const frontX = 350 - extension
+  const midX = 430 - extension * 0.65
+  const rearStart = 500
+  const frontEnd = frontX + frontLength
+  const midEnd = midX + midLength
 
   const frontRadius = 76
   const midRadius = 90
@@ -133,30 +140,40 @@ function LensShell({ layout, focal }: { layout: LensLayout; focal: number }) {
 
   const frontTop = STAGE.centerY - frontRadius
   const frontBottom = STAGE.centerY + frontRadius
-  const zoomStart = frontX + 28
-  const zoomEnd = Math.min(frontX + 142, frontEnd - 10)
+  const zoomStart = midX + 50
+  const zoomEnd = midX + 190
   const focusStart = mountX - 122
   const focusEnd = mountX - 76
   const ribCount = 24
 
   return (
-    <g className="lens-shell" data-testid="lens-shell" data-front-x={frontX.toFixed(2)} aria-hidden="true">
+    <g
+      className="lens-shell"
+      data-testid="lens-shell"
+      data-front-x={frontX.toFixed(2)}
+      data-front-length={frontLength}
+      data-front-ratio="1.0"
+      data-mid-x={midX.toFixed(2)}
+      data-mid-length={midLength}
+      data-mid-ratio="0.65"
+      aria-hidden="true"
+    >
       <ShellTube
         x1={rearStart}
         x2={mountX}
         radius={rearRadius}
         fill="rgba(148, 163, 184, 0.16)"
         stroke="rgba(203, 213, 225, 0.55)"
-        label="OUTER"
+        label="OUTER · FIXED"
         labelColor="rgba(226,232,240,0.66)"
       />
       <ShellTube
-        x1={midStart}
-        x2={rearStart + 14}
+        x1={midX}
+        x2={midEnd}
         radius={midRadius}
         fill="rgba(94, 234, 212, 0.1)"
         stroke="rgba(94, 234, 212, 0.4)"
-        label="ZOOM TUBE"
+        label="ZOOM TUBE · 0.65×"
         labelColor="rgba(94,234,212,0.7)"
       />
       <ShellTube
@@ -165,7 +182,7 @@ function LensShell({ layout, focal }: { layout: LensLayout; focal: number }) {
         radius={frontRadius}
         fill="rgba(226, 232, 240, 0.12)"
         stroke="rgba(226, 232, 240, 0.42)"
-        label="FRONT"
+        label="FRONT · 1.0×"
         labelColor="rgba(226,232,240,0.62)"
       />
 
@@ -239,7 +256,7 @@ function LensShell({ layout, focal }: { layout: LensLayout; focal: number }) {
 
       {/* Fixed/extension boundaries make the nesting legible. */}
       <line x1={rearStart} y1={STAGE.centerY - rearRadius + 10} x2={rearStart} y2={STAGE.centerY + rearRadius - 10} stroke="rgba(94,234,212,0.38)" strokeWidth={1.2} strokeDasharray="3 5" />
-      <line x1={midStart} y1={STAGE.centerY - midRadius + 10} x2={midStart} y2={STAGE.centerY + midRadius - 10} stroke="rgba(94,234,212,0.25)" strokeWidth={1} strokeDasharray="3 5" />
+      <line x1={midX} y1={STAGE.centerY - midRadius + 10} x2={midX} y2={STAGE.centerY + midRadius - 10} stroke="rgba(94,234,212,0.25)" strokeWidth={1} strokeDasharray="3 5" />
     </g>
   )
 }
