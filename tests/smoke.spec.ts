@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test'
 
-test('renders the I5 guide and the 19-element structure', async ({ page }) => {
+test('renders the v1.0 lab and the 19-element structure', async ({ page }) => {
   await page.goto('/')
 
   await expect(page).toHaveTitle(/Mirrorless Zoom Optics Lab/)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('24–200mm')
   await expect(page.getByTestId('lens-structure')).toBeVisible()
-  await expect(page.getByText('I5 BUILD')).toBeVisible()
+  await expect(page.getByText('v1.0 RELEASE')).toBeVisible()
+  await expect(page.locator('.build-badge')).toContainText('v1.0')
   await expect(page.getByTestId('element-L11')).toBeVisible()
   await expect(page.getByTestId('element-L62')).toBeVisible()
   await expect(page.locator('[data-testid^="element-"]')).toHaveCount(19)
@@ -179,4 +180,52 @@ test('supports keyboard selection and the skip link without console errors', asy
   await page.keyboard.press('Enter')
   await expect(page.getByTestId('inspector-selection')).toContainText('L12')
   expect(errors).toEqual([])
+})
+
+test('keyboard main path: zoom, manual defocus, AF-S refocus', async ({ page }) => {
+  await page.goto('/')
+
+  const zoom = page.getByRole('slider', { name: '焦距' })
+  await zoom.focus()
+  await page.keyboard.press('End')
+  await expect(zoom).toHaveValue('200')
+
+  const manual = page.getByRole('slider', { name: '手动对焦' })
+  await manual.focus()
+  await page.keyboard.press('End')
+  await expect(page.getByTestId('focus-status')).toHaveText('离焦')
+
+  const afs = page.getByRole('button', { name: /AF-S 单次对焦/ })
+  await afs.focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByTestId('focus-status')).toHaveText('合焦', { timeout: 3000 })
+})
+
+test('respects reduced motion and exposes accessible names', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+
+  await page.getByRole('slider', { name: '手动对焦' }).press('End')
+  await expect(page.getByTestId('focus-status')).toHaveText('离焦')
+  await page.getByRole('button', { name: /AF-S 单次对焦/ }).click()
+  await expect(page.getByTestId('focus-status')).toHaveText('合焦', { timeout: 1000 })
+
+  const unnamedButtons = await page.locator('button').evaluateAll((buttons) =>
+    buttons.filter(
+      (button) =>
+        !button.textContent?.trim() && !button.getAttribute('aria-label'),
+    ).length,
+  )
+  expect(unnamedButtons).toBe(0)
+
+  const unlabeledRanges = await page.locator('input[type="range"]').evaluateAll((inputs) =>
+    inputs.filter(
+      (input) =>
+        !input.getAttribute('aria-label') &&
+        !input.getAttribute('aria-labelledby') &&
+        !(input as HTMLInputElement).labels?.length,
+    ).length,
+  )
+  expect(unlabeledRanges).toBe(0)
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
 })

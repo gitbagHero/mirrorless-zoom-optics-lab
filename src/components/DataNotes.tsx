@@ -33,7 +33,7 @@ export function DataNotes({ open = false, onOpenChange }: DataNotesProps) {
             <div>
               <h3>这份页面现在是什么</h3>
               <p>
-                I5 阶段已加入六章导览、术语速查与“Try this”状态预设，覆盖结构、变焦、对焦、手动/AF、特殊镜片与模型边界。页面仍是基于公开专利的教学示意模型，不声称量产级复刻。
+                v1.0 已完成六章导览、术语速查与“Try this”状态预设，覆盖结构、变焦、对焦、手动/AF、特殊镜片与模型边界。页面仍是基于公开专利的教学示意模型，不声称量产级复刻。
               </p>
             </div>
             <div>

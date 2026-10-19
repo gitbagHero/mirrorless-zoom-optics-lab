@@ -12,15 +12,22 @@ import type { RayMode } from '../optics/trace'
 import type { GuidePreset } from '../data/guide'
 import { lensSpec } from '../data/specs'
 
-const ROADMAP = [
+type RoadmapItem = {
+  id: string
+  title: string
+  status: 'done' | 'active' | 'queued'
+  note: string
+}
+
+const ROADMAP: RoadmapItem[] = [
   { id: 'I0', title: '基础与设计系统', status: 'done', note: '已完成' },
   { id: 'I1', title: '19 片结构与六组', status: 'done', note: '已完成' },
   { id: 'I2', title: '光路引擎', status: 'done', note: '已完成' },
   { id: 'I3', title: '变焦运动', status: 'done', note: '已完成' },
   { id: 'I4', title: '对焦与合成成像', status: 'done', note: '已完成' },
-  { id: 'I5', title: '分章导览', status: 'active', note: '当前' },
-  { id: 'I6', title: '发布硬化与 v1.0', status: 'queued', note: '下一步' },
-] as const
+  { id: 'I5', title: '分章导览', status: 'done', note: '已完成' },
+  { id: 'I6', title: '发布硬化与 v1.0', status: 'done', note: 'v1.0' },
+]
 
 const REPO_URL = 'https://github.com/gitbagHero/mirrorless-zoom-optics-lab'
 const PLAN_URL = `${REPO_URL}/blob/dsh-dev/docs/development-plan.md`
@@ -139,7 +146,7 @@ function App() {
           </nav>
 
           <div className="header-meta">
-            <span className="build-badge">v0.6 · I5</span>
+            <span className="build-badge">v1.0 · I6</span>
             <a className="ghost-link" href={REPO_URL} target="_blank" rel="noreferrer">
               GitHub
             </a>
@@ -150,7 +157,7 @@ function App() {
       <main id="top">
         <section className="hero section-shell" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="eyebrow">OPTICS LAB / BUILD 0.6</p>
+            <p className="eyebrow">OPTICS LAB / BUILD 1.0</p>
             <h1 id="hero-title">
               <span className="hero-line">把一支 24–200mm</span>
               <span className="hero-line">变焦镜头，</span>
@@ -181,7 +188,7 @@ function App() {
           <aside className="spec-card" aria-label="镜头关键数据">
             <div className="spec-card-head">
               <span className="eyebrow">LENS / SPEC</span>
-              <span className="status-dot">I5</span>
+              <span className="status-dot">I6</span>
             </div>
             <p className="spec-name">{lensSpec.shortName}</p>
             <div className="spec-metrics">
@@ -230,7 +237,7 @@ function App() {
               <h2 id="workbench-title">光学工作台</h2>
             </div>
             <p className="section-note">
-              I5 已把操作串成六章导览与术语速查；I6 做跨浏览器、无障碍与 v1.0 发布硬化。
+              v1.0 已完成：19 片结构、二维光线追迹、24–200 mm 变焦、G5 对焦、AF 演示与六章导览全部接入。
             </p>
           </div>
 
@@ -241,7 +248,7 @@ function App() {
                   <span className="stage-title">镜头侧视 / 19 片结构</span>
                   <span className="stage-subtitle">专利实施例 8 · 点击镜片或组</span>
                 </div>
-                <span className="stage-status">I5 BUILD</span>
+                <span className="stage-status">v1.0 RELEASE</span>
               </div>
               <LensStructure
                 viewMode={viewMode}
@@ -318,7 +325,7 @@ function App() {
               <p className="eyebrow">03 / ROADMAP</p>
               <h2 id="roadmap-title">v1.0 开发路线</h2>
             </div>
-            <p className="section-note">每个增量独立验收；通过后更新计划状态并推送 dsh-dev。</p>
+            <p className="section-note">I0–I6 全部 verified；post-v1.0 的 VR、光圈与像差深化见开发计划。</p>
           </div>
 
           <div className="roadmap-grid">
@@ -347,7 +354,7 @@ function App() {
             <p>非官方、非商业教学演示。基于公开专利与官方规格，不是量产镜头精确仿真。</p>
           </div>
           <div className="footer-meta">
-            <span>v0.6 · I5</span>
+            <span>v1.0 · I6</span>
             <a href={PLAN_URL} target="_blank" rel="noreferrer">
               开发计划
             </a>

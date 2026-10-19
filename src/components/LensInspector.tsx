@@ -35,10 +35,10 @@ export function LensInspector({
     <aside className="control-rail inspector-rail" aria-label="结构选择器">
       <div className="inspector-head">
         <div>
-          <p className="eyebrow">STRUCTURE / I5</p>
+          <p className="eyebrow">STRUCTURE / I6</p>
           <h3>19 片结构</h3>
         </div>
-        <span className="status-dot">I5</span>
+        <span className="status-dot">I6</span>
       </div>
 
       <div className="segmented" role="group" aria-label="结构视图">

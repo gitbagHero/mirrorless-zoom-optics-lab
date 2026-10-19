@@ -37,6 +37,7 @@ export function useFocusController(focal: number, spacing: Spacing) {
 
   const positionRef = useRef(position)
   const animationRef = useRef<number | null>(null)
+  const fallbackRef = useRef<number | null>(null)
 
   useEffect(() => {
     positionRef.current = position
@@ -46,6 +47,10 @@ export function useFocusController(focal: number, spacing: Spacing) {
     if (animationRef.current !== null) {
       cancelAnimationFrame(animationRef.current)
       animationRef.current = null
+    }
+    if (fallbackRef.current !== null) {
+      clearTimeout(fallbackRef.current)
+      fallbackRef.current = null
     }
   }, [])
 
@@ -85,10 +90,20 @@ export function useFocusController(focal: number, spacing: Spacing) {
           setPosition(to)
           setAfState('locked')
           animationRef.current = null
+          if (fallbackRef.current !== null) {
+            clearTimeout(fallbackRef.current)
+            fallbackRef.current = null
+          }
         }
       }
 
       animationRef.current = requestAnimationFrame(tick)
+      fallbackRef.current = window.setTimeout(() => {
+        setPosition(to)
+        setAfState('locked')
+        animationRef.current = null
+        fallbackRef.current = null
+      }, duration + 150)
     },
     [mode, stop],
   )

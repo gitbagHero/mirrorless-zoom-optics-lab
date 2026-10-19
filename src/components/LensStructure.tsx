@@ -387,7 +387,7 @@ export function LensStructure({
       <div className="zoom-control">
         <div className="zoom-head">
           <span className="zoom-label">FOCAL LENGTH / 焦距</span>
-          <output className="zoom-value" htmlFor="focal-range">
+          <output className="zoom-value" htmlFor="focal-range" aria-live="polite">
             {focal} <span>mm</span>
           </output>
         </div>

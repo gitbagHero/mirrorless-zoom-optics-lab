@@ -173,6 +173,9 @@ export function FocusPanel({ controller, focal }: FocusPanelProps) {
               <span
                 className={`focus-status ${status === '合焦' ? 'is-sharp' : ''}`}
                 data-testid="focus-status"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
               >
                 {status}
               </span>
