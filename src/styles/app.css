@@ -496,6 +496,7 @@ h3 {
 }
 
 #workbench,
+#focus,
 #principles,
 #roadmap,
 #data-notes {
@@ -1144,6 +1145,7 @@ h3 {
 
 @media (max-width: 760px) {
   #workbench,
+  #focus,
   #principles,
   #roadmap,
   #data-notes {
@@ -2213,5 +2215,329 @@ h3 {
 
   .motion-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* I4 focus lab */
+.focus-lab {
+  padding-top: 58px;
+  padding-bottom: 10px;
+}
+
+.focus-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.focus-controls,
+.focus-preview {
+  padding: 20px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.focus-controls {
+  display: grid;
+  gap: 16px;
+}
+
+.focus-block {
+  display: grid;
+  gap: 8px;
+}
+
+.focus-block-label {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mode-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-3);
+}
+
+.mode-row button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mode-row button:hover {
+  color: var(--ink);
+}
+
+.mode-row button.is-active {
+  background: var(--surface);
+  color: var(--accent-strong);
+  box-shadow: 0 1px 0 rgba(23, 32, 51, 0.12);
+}
+
+.target-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.target-row button {
+  min-height: 30px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.target-row button:hover {
+  border-color: var(--line-strong);
+}
+
+.target-row button.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.focus-slider-label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.focus-slider-label output {
+  min-width: 52px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 750;
+  text-align: right;
+}
+
+.focus-range {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.focus-travel-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.focus-readouts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--line);
+}
+
+.focus-readouts > div {
+  display: grid;
+  gap: 2px;
+  padding: 9px 11px;
+  background: var(--surface-2);
+}
+
+.focus-readouts span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.focus-readouts strong {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.focus-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.focus-actions .button {
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.focus-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.focus-preview {
+  display: grid;
+  gap: 12px;
+}
+
+.preview-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.preview-head > div {
+  display: grid;
+  gap: 5px;
+}
+
+.focus-status {
+  justify-self: start;
+  padding: 3px 8px;
+  border: 1px solid #e5c48c;
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: #6b3b0d;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.focus-status.is-sharp {
+  border-color: #a6d9d2;
+  background: var(--accent-soft);
+  color: #134e4a;
+}
+
+.af-state {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.af-state.af-tracking,
+.af-state.af-driving {
+  border-color: #e5c48c;
+  background: var(--amber-soft);
+  color: #6b3b0d;
+}
+
+.af-state.af-locked {
+  border-color: #a6d9d2;
+  background: var(--accent-soft);
+  color: #134e4a;
+}
+
+.target-scene-wrap {
+  display: grid;
+  gap: 5px;
+}
+
+.target-scene {
+  overflow: hidden;
+  border: 1px solid #17263b;
+  border-radius: 14px;
+  background: #071426;
+  transition: filter 120ms linear;
+}
+
+.target-scene svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.target-scene-caption {
+  color: var(--muted);
+  font-size: 9px;
+  text-align: right;
+}
+
+.clarity-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.clarity-bar {
+  flex: 1;
+  height: 9px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+.clarity-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--amber), var(--accent));
+  transition: width 120ms linear;
+}
+
+.clarity-row > span {
+  min-width: 38px;
+  color: var(--accent-strong);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.preview-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+@media (max-width: 900px) {
+  .focus-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .focus-controls,
+  .focus-preview {
+    padding: 16px;
+  }
+
+  .mode-row button {
+    font-size: 11px;
+  }
+
+  .focus-actions .button {
+    width: 100%;
   }
 }

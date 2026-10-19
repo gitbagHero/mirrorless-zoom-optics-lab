@@ -22,6 +22,8 @@ type LensStructureProps = {
   onRayModeChange: (mode: RayMode) => void
   onShowRaysChange: (show: boolean) => void
   spacing: Spacing
+  zoomSpacing: Spacing
+  objectDistanceMm: number
   focal: number
   onFocalChange: (focal: number) => void
 }
@@ -372,11 +374,13 @@ export function LensStructure({
   onRayModeChange,
   onShowRaysChange,
   spacing,
+  zoomSpacing,
+  objectDistanceMm,
   focal,
   onFocalChange,
 }: LensStructureProps) {
   const layout = buildLensLayout(spacing)
-  const efl = computeEfl(spacing)
+  const efl = computeEfl(zoomSpacing)
 
   return (
     <div className="structure-wrap" data-testid="lens-structure">
@@ -439,13 +443,18 @@ export function LensStructure({
           显示光线
         </label>
         <span className="ray-efl" data-testid="efl-value">
-          EFL {efl.toFixed(2)} mm
+          EFL (∞) {efl.toFixed(2)} mm
         </span>
       </div>
 
       <div className="stage-scroll">
         <div className="structure-canvas-wrap">
-          <RayCanvas mode={rayMode} showRays={showRays} spacing={spacing} />
+          <RayCanvas
+            mode={rayMode}
+            showRays={showRays}
+            spacing={spacing}
+            objectDistanceMm={objectDistanceMm}
+          />
           <svg
             className="structure-svg"
             viewBox={`0 0 ${STAGE.width} ${STAGE.height}`}

@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test'
 
-test('renders the I3 zoom lab and the 19-element structure', async ({ page }) => {
+test('renders the I4 focus lab and the 19-element structure', async ({ page }) => {
   await page.goto('/')
 
   await expect(page).toHaveTitle(/Mirrorless Zoom Optics Lab/)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('24–200mm')
   await expect(page.getByTestId('lens-structure')).toBeVisible()
-  await expect(page.getByText('I3 ZOOM')).toBeVisible()
+  await expect(page.getByText('I4 FOCUS')).toBeVisible()
   await expect(page.getByTestId('element-L11')).toBeVisible()
   await expect(page.getByTestId('element-L62')).toBeVisible()
   await expect(page.locator('[data-testid^="element-"]')).toHaveCount(19)
@@ -57,6 +57,32 @@ test('moves the six groups across the zoom range', async ({ page }) => {
   await expect(slider).toHaveValue('24')
   await expect(page.getByTestId('efl-value')).toContainText('24.70')
   await expect(page.getByTestId('motion-G1')).toContainText('0.0')
+})
+
+test('focuses manually and with AF-S / AF-C', async ({ page }) => {
+  await page.goto('/')
+
+  const status = page.getByTestId('focus-status')
+  const clarity = page.getByTestId('focus-clarity')
+  await expect(status).toHaveText('合焦')
+  await expect(clarity).toHaveText('100%')
+  await expect(page.getByTestId('target-scene')).toBeVisible()
+
+  const manual = page.getByRole('slider', { name: '手动对焦' })
+  await manual.press('End')
+  await expect(status).toHaveText('离焦')
+  await expect(clarity).toHaveText('0%')
+
+  await page.getByRole('button', { name: /AF-S 单次对焦/ }).click()
+  await expect(status).toHaveText('合焦', { timeout: 3000 })
+  await expect(clarity).toHaveText('100%')
+
+  await page.getByRole('button', { name: /近景/ }).click()
+  await expect(status).toHaveText('合焦', { timeout: 3000 })
+
+  await page.getByRole('button', { name: /连续 AF-C/ }).click()
+  await page.getByRole('button', { name: /远景 20 m/ }).click()
+  await expect(status).toHaveText('合焦', { timeout: 3000 })
 })
 
 test('switches ray presets and toggles the ray layer', async ({ page }) => {

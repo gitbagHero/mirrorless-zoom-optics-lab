@@ -7,9 +7,10 @@ type RayCanvasProps = {
   mode: RayMode
   showRays: boolean
   spacing: Spacing
+  objectDistanceMm: number
 }
 
-export function RayCanvas({ mode, showRays, spacing }: RayCanvasProps) {
+export function RayCanvas({ mode, showRays, spacing, objectDistanceMm }: RayCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export function RayCanvas({ mode, showRays, spacing }: RayCanvasProps) {
       context.clearRect(0, 0, canvas.width, canvas.height)
       if (!showRays) return
 
-      const bundle = traceBundle(mode, spacing)
+      const bundle = traceBundle(mode, spacing, objectDistanceMm)
       context.setTransform(
         canvas.width / STAGE_GEOMETRY.width,
         0,
@@ -87,7 +88,7 @@ export function RayCanvas({ mode, showRays, spacing }: RayCanvasProps) {
     draw()
 
     return () => observer.disconnect()
-  }, [mode, showRays, spacing])
+  }, [mode, showRays, spacing, objectDistanceMm])
 
   return (
     <canvas

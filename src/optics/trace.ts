@@ -31,6 +31,7 @@ export type TraceBundle = {
   imageZ: number
   stopRadius: number
   surfaces: TraceSurface[]
+  objectDistanceMm: number
 }
 
 const STOP_RADIUS = 10.5
@@ -186,12 +187,25 @@ function traceSingleRay(
   color: string,
   surfaces: TraceSurface[],
   imageZ: number,
+  objectDistanceMm = Infinity,
 ): TracedRay {
   const first = surfaces[0]
   const last = surfaces[surfaces.length - 1]
-  const startZ = first.z - START_DISTANCE
-  const startY = heightAtFirst - Math.tan(angle) * (first.z - startZ)
-  const startDirection = normalize({ z: Math.cos(angle), y: Math.sin(angle) })
+  let startZ: number
+  let startY: number
+  let startDirection: Vec2
+
+  if (Number.isFinite(objectDistanceMm) && objectDistanceMm > 0) {
+    const objectZ = first.z - objectDistanceMm
+    const slope = heightAtFirst / Math.max(first.z - objectZ, 1)
+    startZ = first.z - START_DISTANCE
+    startY = slope * (startZ - objectZ)
+    startDirection = normalize({ z: 1, y: slope })
+  } else {
+    startZ = first.z - START_DISTANCE
+    startY = heightAtFirst - Math.tan(angle) * (first.z - startZ)
+    startDirection = normalize({ z: Math.cos(angle), y: Math.sin(angle) })
+  }
 
   let origin = { z: startZ, y: startY }
   let direction = startDirection
@@ -286,6 +300,7 @@ export function traceRays(
   heights: number[],
   angle = 0,
   spacing: Spacing = PATENT_SPACING,
+  objectDistanceMm = Infinity,
 ): TracedRay[] {
   const { surfaces, imageZ } = buildSurfaceSequence(spacing)
   const palette = ['#fbbf24', '#5eead4', '#c4b5fd', '#f472b6', '#93c5fd']
@@ -297,6 +312,7 @@ export function traceRays(
       palette[index % palette.length],
       surfaces,
       imageZ,
+      objectDistanceMm,
     ),
   )
 }
@@ -304,6 +320,7 @@ export function traceRays(
 export function traceBundle(
   mode: RayMode = 'onAxis',
   spacing: Spacing = PATENT_SPACING,
+  objectDistanceMm = Infinity,
 ): TraceBundle {
   const samples =
     mode === 'fan'
@@ -316,7 +333,7 @@ export function traceBundle(
 
   return {
     mode,
-    rays: traceRays(samples, angle, spacing).map((ray) => ({
+    rays: traceRays(samples, angle, spacing, objectDistanceMm).map((ray) => ({
       ...ray,
       id: `${mode}-${ray.id}`,
     })),
@@ -324,5 +341,6 @@ export function traceBundle(
     imageZ,
     stopRadius: STOP_RADIUS,
     surfaces,
+    objectDistanceMm,
   }
 }
