@@ -3,13 +3,14 @@ import { DataNotes } from '../components/DataNotes'
 import { LensInspector } from '../components/LensInspector'
 import { LensStructure, type Selection, type ViewMode } from '../components/LensStructure'
 import { elementById } from '../data/lensStructure'
+import type { RayMode } from '../optics/trace'
 import { lensSpec } from '../data/specs'
 
 const ROADMAP = [
   { id: 'I0', title: '基础与设计系统', status: 'done', note: '已完成' },
-  { id: 'I1', title: '19 片结构与六组', status: 'active', note: '当前' },
-  { id: 'I2', title: '光路引擎', status: 'queued', note: '下一步' },
-  { id: 'I3', title: '变焦运动', status: 'queued', note: '待开始' },
+  { id: 'I1', title: '19 片结构与六组', status: 'done', note: '已完成' },
+  { id: 'I2', title: '光路引擎', status: 'active', note: '当前' },
+  { id: 'I3', title: '变焦运动', status: 'queued', note: '下一步' },
   { id: 'I4', title: '对焦与合成成像', status: 'queued', note: '待开始' },
   { id: 'I5', title: '分章导览', status: 'queued', note: '待开始' },
   { id: 'I6', title: '发布硬化与 v1.0', status: 'queued', note: '待开始' },
@@ -31,6 +32,8 @@ function BrandMark() {
 function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('elements')
   const [selection, setSelection] = useState<Selection>({ kind: 'group', id: 'G1' })
+  const [rayMode, setRayMode] = useState<RayMode>('onAxis')
+  const [showRays, setShowRays] = useState(true)
 
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode)
@@ -63,7 +66,7 @@ function App() {
           </nav>
 
           <div className="header-meta">
-            <span className="build-badge">v0.2 · I1</span>
+            <span className="build-badge">v0.3 · I2</span>
             <a className="ghost-link" href={REPO_URL} target="_blank" rel="noreferrer">
               GitHub
             </a>
@@ -74,7 +77,7 @@ function App() {
       <main id="top">
         <section className="hero section-shell" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="eyebrow">OPTICS LAB / BUILD 0.2</p>
+            <p className="eyebrow">OPTICS LAB / BUILD 0.3</p>
             <h1 id="hero-title">
               <span className="hero-line">把一支 24–200mm</span>
               <span className="hero-line">变焦镜头，</span>
@@ -105,7 +108,7 @@ function App() {
           <aside className="spec-card" aria-label="镜头关键数据">
             <div className="spec-card-head">
               <span className="eyebrow">LENS / SPEC</span>
-              <span className="status-dot">I1</span>
+              <span className="status-dot">I2</span>
             </div>
             <p className="spec-name">{lensSpec.shortName}</p>
             <div className="spec-metrics">
@@ -154,7 +157,7 @@ function App() {
               <h2 id="workbench-title">光学工作台</h2>
             </div>
             <p className="section-note">
-              I1 已接入 19 片专利处方结构与六组双视图；I2 接光路，I3/I4 接变焦与对焦。
+              I2 已接入 19 片结构上的二维光线追迹：轴上、轴外与光线扇；I3 接变焦运动。
             </p>
           </div>
 
@@ -165,16 +168,20 @@ function App() {
                   <span className="stage-title">镜头侧视 / 19 片结构</span>
                   <span className="stage-subtitle">专利实施例 8 · 点击镜片或组</span>
                 </div>
-                <span className="stage-status">I1 STRUCTURE</span>
+                <span className="stage-status">I2 RAYS</span>
               </div>
               <LensStructure
                 viewMode={viewMode}
                 selection={selection}
                 onSelect={setSelection}
+                rayMode={rayMode}
+                showRays={showRays}
+                onRayModeChange={setRayMode}
+                onShowRaysChange={setShowRays}
               />
               <div className="stage-footer">
                 <span className="pulse-dot" aria-hidden="true" />
-                <span>轴向间距压缩，形状按专利半径绘制；I2 接入逐面折射与实际光线。</span>
+                <span>轴向按专利间距，形状按专利半径；宽角端 EFL 与专利 24.70 mm 一致。实线为有效光线，虚线为被光圈裁切或未到达像面的光线。</span>
               </div>
             </article>
 
@@ -256,7 +263,7 @@ function App() {
             <p>非官方、非商业教学演示。基于公开专利与官方规格，不是量产镜头精确仿真。</p>
           </div>
           <div className="footer-meta">
-            <span>v0.2 · I1</span>
+            <span>v0.3 · I2</span>
             <a href={PLAN_URL} target="_blank" rel="noreferrer">
               开发计划
             </a>

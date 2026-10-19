@@ -1,15 +1,17 @@
 import { expect, test } from '@playwright/test'
 
-test('renders the I1 shell and the 19-element structure', async ({ page }) => {
+test('renders the I2 ray lab and the 19-element structure', async ({ page }) => {
   await page.goto('/')
 
   await expect(page).toHaveTitle(/Mirrorless Zoom Optics Lab/)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('24–200mm')
   await expect(page.getByTestId('lens-structure')).toBeVisible()
-  await expect(page.getByText('I1 STRUCTURE')).toBeVisible()
+  await expect(page.getByText('I2 RAYS')).toBeVisible()
   await expect(page.getByTestId('element-L11')).toBeVisible()
   await expect(page.getByTestId('element-L62')).toBeVisible()
   await expect(page.locator('[data-testid^="element-"]')).toHaveCount(19)
+  await expect(page.getByTestId('ray-canvas')).toBeVisible()
+  await expect(page.getByTestId('efl-value')).toContainText('24.70')
 })
 
 test('selects an element and switches between 19 elements and 6 groups', async ({ page }) => {
@@ -32,6 +34,35 @@ test('selects an element and switches between 19 elements and 6 groups', async (
 
   await page.getByRole('button', { name: '19 片结构' }).click()
   await expect(page.getByTestId('element-L11')).toBeVisible()
+})
+
+test('switches ray presets and toggles the ray layer', async ({ page }) => {
+  await page.goto('/')
+
+  const canvas = page.getByTestId('ray-canvas')
+  await expect(canvas).toBeVisible()
+  const size = await canvas.evaluate((element) => ({
+    width: (element as HTMLCanvasElement).width,
+    height: (element as HTMLCanvasElement).height,
+  }))
+  expect(size.width).toBeGreaterThan(0)
+  expect(size.height).toBeGreaterThan(0)
+
+  const offAxis = page.getByRole('button', { name: '轴外' })
+  await offAxis.click()
+  await expect(offAxis).toHaveAttribute('aria-pressed', 'true')
+
+  await page.getByRole('button', { name: '光线扇' }).click()
+  await expect(page.getByRole('button', { name: '光线扇' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+
+  const toggle = page.getByLabel('显示光线')
+  await toggle.uncheck()
+  await expect(toggle).not.toBeChecked()
+  await toggle.check()
+  await expect(toggle).toBeChecked()
 })
 
 test('opens the data notes and exposes sources', async ({ page }) => {

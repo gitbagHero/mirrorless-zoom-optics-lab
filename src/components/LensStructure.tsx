@@ -7,6 +7,11 @@ import {
   type LensElement,
 } from '../data/lensStructure'
 import { TAG_META } from '../data/tags'
+import { STAGE_GEOMETRY as STAGE } from '../optics/stageGeometry'
+import { computeEfl, type RayMode } from '../optics/trace'
+import { RayCanvas } from './RayCanvas'
+
+const WIDE_EFL = computeEfl()
 
 export type ViewMode = 'elements' | 'groups'
 export type Selection =
@@ -17,18 +22,10 @@ type LensStructureProps = {
   viewMode: ViewMode
   selection: Selection
   onSelect: (selection: Selection) => void
-}
-
-const STAGE = {
-  width: 980,
-  height: 440,
-  x0: 60,
-  centerY: 235,
-  axialScale: 10.4,
-  radialScale: 3.15,
-  airGapScale: 0.42,
-  elementLabelTop: 352,
-  tagLabelTop: 390,
+  rayMode: RayMode
+  showRays: boolean
+  onRayModeChange: (mode: RayMode) => void
+  onShowRaysChange: (show: boolean) => void
 }
 
 type PositionedElement = LensElement & {
@@ -117,7 +114,10 @@ function getLayout(): Layout {
       path: makeElementPath(startX, endX, element.semiHeight, element.r1, element.r2),
       primaryTag,
     }
-    cursor += element.thickness + element.gapAfter * STAGE.airGapScale
+    cursor += element.thickness + element.gapAfter
+    if (element.id === 'L24') {
+      cursor += STAGE.stopGap
+    }
     return positioned
   })
 
@@ -133,9 +133,8 @@ function getLayout(): Layout {
     }
   })
 
-  const g2 = groups.find((group) => group.id === 'G2')
   const g3 = groups.find((group) => group.id === 'G3')
-  const apertureX = g2 && g3 ? g2.maxX + (g3.minX - g2.maxX) * 0.72 : 0
+  const apertureX = g3 ? g3.minX - STAGE.stopGap * STAGE.axialScale : 0
 
   return {
     elements,
@@ -477,63 +476,95 @@ function StructureLegend({
   )
 }
 
-export function LensStructure({ viewMode, selection, onSelect }: LensStructureProps) {
+export function LensStructure({
+  viewMode,
+  selection,
+  onSelect,
+  rayMode,
+  showRays,
+  onRayModeChange,
+  onShowRaysChange,
+}: LensStructureProps) {
   return (
     <div className="structure-wrap" data-testid="lens-structure">
-      <div className="stage-scroll">
-        <svg
-          className="structure-svg"
-          viewBox={`0 0 ${STAGE.width} ${STAGE.height}`}
-          role="group"
-          aria-label="19 片 15 组镜头结构示意"
-        >
-          <defs>
-            <pattern id="structure-grid" width="28" height="28" patternUnits="userSpaceOnUse">
-              <path
-                d="M 28 0 L 0 0 0 28"
-                fill="none"
-                stroke="rgba(148, 197, 255, 0.1)"
-                strokeWidth="1"
-              />
-            </pattern>
-            <filter id="structure-glow" x="-20%" y="-40%" width="140%" height="180%">
-              <feGaussianBlur stdDeviation="2.4" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
-          <rect width={STAGE.width} height={STAGE.height} fill="#08111f" />
-          <rect width={STAGE.width} height={STAGE.height} fill="url(#structure-grid)" />
-
-          <text x="34" y="42" className="stage-kicker">
-            PATENT EXAMPLE 8 / 19 ELEMENTS
-          </text>
-          <text x="34" y="64" className="stage-subkicker">
-            19 片 · 15 组 · 六组功能分区 · 示意口径
-          </text>
-
-          <line
-            x1="34"
-            y1={STAGE.centerY}
-            x2={layout.imageX + 24}
-            y2={STAGE.centerY}
-            stroke="rgba(148, 197, 255, 0.3)"
-            strokeDasharray="4 10"
+      <div className="ray-toolbar">
+        <span className="ray-toolbar-label">光路</span>
+        <div className="ray-mode-group" role="group" aria-label="光线预设">
+          {([
+            ['onAxis', '轴上'],
+            ['offAxis', '轴外'],
+            ['fan', '光线扇'],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={rayMode === value ? 'is-active' : ''}
+              aria-pressed={rayMode === value}
+              onClick={() => onRayModeChange(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <label className="ray-toggle">
+          <input
+            type="checkbox"
+            checked={showRays}
+            onChange={(event) => onShowRaysChange(event.target.checked)}
           />
+          显示光线
+        </label>
+        <span className="ray-efl" data-testid="efl-value">
+          EFL {WIDE_EFL.toFixed(2)} mm
+        </span>
+      </div>
 
-          {viewMode === 'elements' ? (
-            <ElementView selection={selection} onSelect={onSelect} />
-          ) : (
-            <GroupView selection={selection} onSelect={onSelect} />
-          )}
+      <div className="stage-scroll">
+        <div className="structure-canvas-wrap">
+          <RayCanvas mode={rayMode} showRays={showRays} />
+          <svg
+            className="structure-svg"
+            viewBox={`0 0 ${STAGE.width} ${STAGE.height}`}
+            role="group"
+            aria-label="19 片 15 组镜头结构示意"
+          >
+            <defs>
+              <filter id="structure-glow" x="-20%" y="-40%" width="140%" height="180%">
+                <feGaussianBlur stdDeviation="2.4" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
 
-          <text x="34" y="420" className="stage-annotation-text">
-            轴向间距压缩 · 径向比例放大 · 形状按专利半径示意
-          </text>
-        </svg>
+            <text x="34" y="42" className="stage-kicker">
+              PATENT EXAMPLE 8 / 19 ELEMENTS
+            </text>
+            <text x="34" y="64" className="stage-subkicker">
+              19 片 · 15 组 · 六组功能分区 · 示意口径
+            </text>
+
+            <line
+              x1="34"
+              y1={STAGE.centerY}
+              x2={layout.imageX + 24}
+              y2={STAGE.centerY}
+              stroke="rgba(148, 197, 255, 0.3)"
+              strokeDasharray="4 10"
+            />
+
+            {viewMode === 'elements' ? (
+              <ElementView selection={selection} onSelect={onSelect} />
+            ) : (
+              <GroupView selection={selection} onSelect={onSelect} />
+            )}
+
+            <text x="34" y="420" className="stage-annotation-text">
+              轴向按专利间距 · 径向比例放大 · 形状按专利半径示意
+            </text>
+          </svg>
+        </div>
         <p className="stage-scroll-hint">左右滑动查看完整结构</p>
       </div>
 
