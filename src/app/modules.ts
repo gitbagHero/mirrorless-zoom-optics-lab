@@ -1,18 +1,19 @@
-export type ModuleId = 'overview' | 'workbench' | 'focus' | 'guide' | 'data'
+export type ModuleId = 'workbench' | 'focus' | 'guide' | 'data'
+export type ModuleIconName = 'lens' | 'focus' | 'guide' | 'data'
 
 export type AppModule = {
   id: ModuleId
   label: string
   kicker: string
   number: string
+  icon: ModuleIconName
 }
 
 export const appModules: AppModule[] = [
-  { id: 'overview', label: '概览', kicker: 'OVERVIEW', number: '01' },
-  { id: 'workbench', label: '工作台', kicker: 'WORKBENCH', number: '02' },
-  { id: 'focus', label: '对焦', kicker: 'FOCUS', number: '03' },
-  { id: 'guide', label: '导览', kicker: 'GUIDE', number: '04' },
-  { id: 'data', label: '数据说明', kicker: 'DATA NOTES', number: '05' },
+  { id: 'workbench', label: '工作台', kicker: 'WORKBENCH', number: '01', icon: 'lens' },
+  { id: 'focus', label: '对焦', kicker: 'FOCUS', number: '02', icon: 'focus' },
+  { id: 'guide', label: '导览', kicker: 'GUIDE', number: '03', icon: 'guide' },
+  { id: 'data', label: '数据说明', kicker: 'DATA NOTES', number: '04', icon: 'data' },
 ]
 
 export const moduleById = Object.fromEntries(

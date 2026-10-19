@@ -16,6 +16,7 @@ type WorkbenchSectionProps = {
   selection: Selection
   rayMode: RayMode
   showRays: boolean
+  showShell: boolean
   tab: WorkbenchTab
   onTabChange: (tab: WorkbenchTab) => void
   onFocalChange: (focal: number) => void
@@ -23,6 +24,7 @@ type WorkbenchSectionProps = {
   onSelect: (selection: Selection) => void
   onRayModeChange: (mode: RayMode) => void
   onShowRaysChange: (show: boolean) => void
+  onShowShellChange: (show: boolean) => void
 }
 
 export function WorkbenchSection({
@@ -34,6 +36,7 @@ export function WorkbenchSection({
   selection,
   rayMode,
   showRays,
+  showShell,
   tab,
   onTabChange,
   onFocalChange,
@@ -41,6 +44,7 @@ export function WorkbenchSection({
   onSelect,
   onRayModeChange,
   onShowRaysChange,
+  onShowShellChange,
 }: WorkbenchSectionProps) {
   return (
     <section className="module workbench-module" aria-labelledby="workbench-title">
@@ -67,8 +71,10 @@ export function WorkbenchSection({
             onSelect={onSelect}
             rayMode={rayMode}
             showRays={showRays}
+            showShell={showShell}
             onRayModeChange={onRayModeChange}
             onShowRaysChange={onShowRaysChange}
+            onShowShellChange={onShowShellChange}
             spacing={focusSpacing}
             zoomSpacing={spacing}
             objectDistanceMm={objectDistanceMm}
@@ -79,7 +85,7 @@ export function WorkbenchSection({
           <div className="stage-footer">
             <span className="pulse-dot" aria-hidden="true" />
             <span>
-              轴向按专利间距，形状按专利半径；EFL(∞) 随焦距变化，宽角端 24.70 / 长焦端 194.00 与专利锚点一致。对焦会移动 G5，当前焦点下的光线从目标距离追迹。实线为有效光线，虚线为裁切或未到像面。
+              轴向按专利间距，形状按专利半径；EFL(∞) 随焦距变化，宽角端 24.70 / 长焦端 194.00 与专利锚点一致。对焦会移动 G5，当前焦点下的光线从目标距离追迹。外壳为示意剖切，变焦内筒随焦距伸缩；不是量产镜筒结构。实线为有效光线，虚线为裁切或未到像面。
             </span>
           </div>
         </article>

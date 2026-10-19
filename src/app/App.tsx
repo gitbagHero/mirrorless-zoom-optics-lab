@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DataNotes } from '../components/DataNotes'
 import { FocusPanel } from '../components/FocusPanel'
 import { GuideSection } from '../components/GuideSection'
+import { LandingPage } from '../components/LandingPage'
 import type { Selection, ViewMode } from '../components/LensStructure'
-import { OverviewSection } from '../components/OverviewSection'
 import { Sidebar } from '../components/Sidebar'
 import { WorkbenchSection, type WorkbenchTab } from '../components/WorkbenchSection'
 import type { GuidePreset } from '../data/guide'
@@ -13,42 +13,108 @@ import type { RayMode } from '../optics/trace'
 import { spacingAtFocal } from '../optics/zoom'
 import { isModuleId, moduleById, type ModuleId } from './modules'
 
+const COLLAPSE_KEY = 'mzol-sidebar-collapsed'
+
 function moduleFromHash(): ModuleId {
   const hash = window.location.hash.replace('#', '')
-  return isModuleId(hash) ? hash : 'overview'
+  return isModuleId(hash) ? hash : 'workbench'
+}
+
+function hasModuleHash() {
+  return isModuleId(window.location.hash.replace('#', ''))
+}
+
+function readCollapsed() {
+  try {
+    return window.localStorage.getItem(COLLAPSE_KEY) === '1'
+  } catch {
+    return false
+  }
 }
 
 function App() {
+  const [landingVisible, setLandingVisible] = useState(() => !hasModuleHash())
+  const [entering, setEntering] = useState(false)
   const [activeModule, setActiveModule] = useState<ModuleId>(moduleFromHash)
   const [viewMode, setViewMode] = useState<ViewMode>('elements')
   const [selection, setSelection] = useState<Selection>({ kind: 'group', id: 'G1' })
   const [rayMode, setRayMode] = useState<RayMode>('onAxis')
   const [showRays, setShowRays] = useState(true)
+  const [showShell, setShowShell] = useState(true)
   const [focal, setFocal] = useState(24)
   const [workbenchTab, setWorkbenchTab] = useState<WorkbenchTab>('structure')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(readCollapsed)
   const spacing = spacingAtFocal(focal)
   const focus = useFocusController(focal, spacing)
+  const enterTimer = useRef<number | null>(null)
 
   useEffect(() => {
     const onHashChange = () => {
       const hash = window.location.hash.replace('#', '')
-      if (isModuleId(hash)) setActiveModule(hash)
+      if (isModuleId(hash)) {
+        setActiveModule(hash)
+        setLandingVisible(false)
+      }
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
   useEffect(() => {
-    document.title = `${moduleById[activeModule].label} · Mirrorless Zoom Optics Lab`
+    try {
+      window.localStorage.setItem(COLLAPSE_KEY, sidebarCollapsed ? '1' : '0')
+    } catch {
+      // Storage is optional; the layout still works without it.
+    }
+  }, [sidebarCollapsed])
+
+  useEffect(() => {
+    document.title = landingVisible
+      ? 'Mirrorless Zoom Optics Lab · 微单变焦镜头光学实验室'
+      : `${moduleById[activeModule].label} · Mirrorless Zoom Optics Lab`
     document.getElementById('module-main')?.scrollTo({ top: 0, behavior: 'auto' })
     window.scrollTo({ top: 0, behavior: 'auto' })
-  }, [activeModule])
+  }, [activeModule, landingVisible])
+
+  useEffect(
+    () => () => {
+      if (enterTimer.current !== null) window.clearTimeout(enterTimer.current)
+    },
+    [],
+  )
 
   const navigate = (module: ModuleId) => {
     setActiveModule(module)
     if (window.location.hash !== `#${module}`) {
       window.history.replaceState(null, '', `#${module}`)
     }
+  }
+
+  const startEnter = () => {
+    if (entering) return
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduced) {
+      navigate('workbench')
+      setLandingVisible(false)
+      return
+    }
+    navigate('workbench')
+    setEntering(true)
+    enterTimer.current = window.setTimeout(() => {
+      setLandingVisible(false)
+      setEntering(false)
+      enterTimer.current = null
+    }, 900)
+  }
+
+  const exitToLanding = () => {
+    if (enterTimer.current !== null) {
+      window.clearTimeout(enterTimer.current)
+      enterTimer.current = null
+    }
+    setEntering(false)
+    setLandingVisible(true)
+    window.history.replaceState(null, '', window.location.pathname)
   }
 
   const handleViewModeChange = (mode: ViewMode) => {
@@ -112,49 +178,64 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <a className="skip-link" href="#module-main">
-        跳到主内容
-      </a>
+    <div className="app-root">
+      {landingVisible ? <LandingPage exiting={entering} onEnter={startEnter} /> : null}
 
-      <Sidebar activeModule={activeModule} onNavigate={navigate} />
+      {!landingVisible || entering ? (
+        <div
+          className={`app-shell ${sidebarCollapsed ? 'is-collapsed' : ''} ${entering ? 'is-entering' : ''}`}
+          aria-hidden={entering ? true : undefined}
+        >
+          <a className="skip-link" href="#module-main">
+            跳到主内容
+          </a>
 
-      <main
-        className="app-main"
-        id="module-main"
-        data-module={activeModule}
-        tabIndex={-1}
-      >
-        <div className="app-module">
-          {activeModule === 'overview' ? <OverviewSection onNavigate={navigate} /> : null}
+          <Sidebar
+            activeModule={activeModule}
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed((value) => !value)}
+            onNavigate={navigate}
+            onExit={exitToLanding}
+          />
 
-          {activeModule === 'workbench' ? (
-            <WorkbenchSection
-              focal={focal}
-              spacing={spacing}
-              focusSpacing={focus.focusSpacing}
-              objectDistanceMm={focus.targetDistance * 1000}
-              viewMode={viewMode}
-              selection={selection}
-              rayMode={rayMode}
-              showRays={showRays}
-              tab={workbenchTab}
-              onTabChange={setWorkbenchTab}
-              onFocalChange={setFocal}
-              onViewModeChange={handleViewModeChange}
-              onSelect={setSelection}
-              onRayModeChange={setRayMode}
-              onShowRaysChange={setShowRays}
-            />
-          ) : null}
+          <main
+            className="app-main"
+            id="module-main"
+            data-module={activeModule}
+            tabIndex={-1}
+          >
+            <div className="app-module">
+              {activeModule === 'workbench' ? (
+                <WorkbenchSection
+                  focal={focal}
+                  spacing={spacing}
+                  focusSpacing={focus.focusSpacing}
+                  objectDistanceMm={focus.targetDistance * 1000}
+                  viewMode={viewMode}
+                  selection={selection}
+                  rayMode={rayMode}
+                  showRays={showRays}
+                  showShell={showShell}
+                  tab={workbenchTab}
+                  onTabChange={setWorkbenchTab}
+                  onFocalChange={setFocal}
+                  onViewModeChange={handleViewModeChange}
+                  onSelect={setSelection}
+                  onRayModeChange={setRayMode}
+                  onShowRaysChange={setShowRays}
+                  onShowShellChange={setShowShell}
+                />
+              ) : null}
 
-          {activeModule === 'focus' ? <FocusPanel controller={focus} focal={focal} /> : null}
+              {activeModule === 'focus' ? <FocusPanel controller={focus} focal={focal} /> : null}
 
-          {activeModule === 'guide' ? <GuideSection onTryThis={handleGuidePreset} /> : null}
+              {activeModule === 'guide' ? <GuideSection onTryThis={handleGuidePreset} /> : null}
 
-          {activeModule === 'data' ? <DataNotes /> : null}
+              {activeModule === 'data' ? <DataNotes /> : null}
+            </div>
+          </main>
         </div>
-      </main>
+      ) : null}
     </div>
   )
 }

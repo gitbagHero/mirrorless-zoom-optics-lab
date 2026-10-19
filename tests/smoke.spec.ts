@@ -7,25 +7,30 @@ async function goTo(page: Page, label: string) {
     .click()
 }
 
-test('renders the overview and switches to the workbench', async ({ page }) => {
+test('renders the landing and enters the workbench', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page).toHaveTitle(/概览 · Mirrorless Zoom Optics Lab/)
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('24–200mm')
-  await expect(page.getByText('LENS / SPEC')).toBeVisible()
-  await expect(page.getByTestId('lens-structure')).toHaveCount(0)
+  await expect(page).toHaveTitle(/Mirrorless Zoom Optics Lab/)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('看见一支变焦镜头的内部。')
+  await expect(page.getByRole('button', { name: /进入工作台/ }).first()).toBeVisible()
+  await expect(page.locator('.landing-lens')).toBeVisible()
+  await expect(page.getByRole('navigation', { name: '模块导航' })).toHaveCount(0)
 
-  await goTo(page, '工作台')
-  await expect(page).toHaveTitle(/工作台 · Mirrorless Zoom Optics Lab/)
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('光学工作台')
-  await expect(page.getByText('v1.0 RELEASE')).toBeVisible()
+  await page.getByRole('button', { name: '进入工作台', exact: true }).click()
+  await expect(page).toHaveURL(/#workbench$/)
+  await expect(page.getByRole('heading', { level: 1, name: '光学工作台' })).toBeVisible()
   await expect(page.getByTestId('lens-structure')).toBeVisible()
+  await expect(page.getByText('v1.0 RELEASE')).toBeVisible()
   await expect(page.getByTestId('element-L11')).toBeVisible()
   await expect(page.getByTestId('element-L62')).toBeVisible()
   await expect(page.locator('[data-testid^="element-"]')).toHaveCount(19)
   await expect(page.getByTestId('ray-canvas')).toBeVisible()
   await expect(page.getByTestId('efl-value')).toContainText('24.70')
-  await expect(page.getByRole('heading', { name: /24–200mm/ })).toHaveCount(0)
+  await expect(page.locator('.landing-page')).toHaveCount(0)
+
+  await page.getByRole('link', { name: '返回起始页' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('看见一支变焦镜头的内部。')
+  await expect(page.getByRole('navigation', { name: '模块导航' })).toHaveCount(0)
 })
 
 test('selects an element and switches between 19 elements and 6 groups', async ({ page }) => {
@@ -82,7 +87,7 @@ test('guide presets switch modules and target the right panel', async ({ page })
   await page.getByTestId('guide-nav-zoom').click()
   await expect(page.getByTestId('guide-try-zoom')).toBeVisible()
   await page.getByTestId('guide-try-zoom').click()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('光学工作台')
+  await expect(page.getByRole('heading', { level: 1, name: '光学工作台' })).toBeVisible()
   await expect(page.locator('#focal-range')).toHaveValue('200')
   await expect(page.getByRole('tab', { name: '变焦运动' })).toHaveAttribute(
     'aria-selected',
@@ -168,6 +173,43 @@ test('switches ray presets and toggles the ray layer', async ({ page }) => {
   await expect(toggle).toBeChecked()
 })
 
+test('toggles the lens shell and moves its front with zoom', async ({ page }) => {
+  await page.goto('/#workbench')
+
+  const shell = page.getByTestId('lens-shell')
+  await expect(shell).toBeVisible()
+  const frontAt24 = Number(await shell.getAttribute('data-front-x'))
+
+  const slider = page.getByRole('slider', { name: '焦距' })
+  await slider.focus()
+  await page.keyboard.press('End')
+  await expect(slider).toHaveValue('200')
+  const frontAt200 = Number(await shell.getAttribute('data-front-x'))
+  expect(frontAt200).toBeLessThan(frontAt24)
+
+  const shellToggle = page.getByLabel('外壳')
+  await shellToggle.uncheck()
+  await expect(shell).toHaveCount(0)
+  await shellToggle.check()
+  await expect(page.getByTestId('lens-shell')).toBeVisible()
+})
+
+test('collapses the sidebar and persists the state', async ({ page }) => {
+  await page.goto('/#workbench')
+
+  await page.getByRole('button', { name: '折叠菜单' }).click()
+  await expect(page.locator('.app-shell')).toHaveClass(/is-collapsed/)
+  await expect(page.getByRole('button', { name: '展开菜单' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  )
+
+  await page.reload()
+  await expect(page.locator('.app-shell')).toHaveClass(/is-collapsed/)
+  await page.getByRole('button', { name: '展开菜单' }).click()
+  await expect(page.locator('.app-shell')).not.toHaveClass(/is-collapsed/)
+})
+
 test('data module exposes sources and the repository address', async ({ page }) => {
   await page.goto('/#data')
 
@@ -185,9 +227,18 @@ test('does not overflow the viewport on mobile for every module', async ({ page 
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
 
-  for (const label of ['概览', '工作台', '对焦', '导览', '数据说明']) {
+  let overflow = await page.evaluate(() => {
+    const root = document.documentElement
+    return root.scrollWidth - root.clientWidth
+  })
+  expect(overflow, 'landing').toBeLessThanOrEqual(1)
+
+  await page.getByRole('button', { name: '进入工作台', exact: true }).click()
+  await expect(page.locator('.app-shell')).toBeVisible()
+
+  for (const label of ['工作台', '对焦', '导览', '数据说明']) {
     await goTo(page, label)
-    const overflow = await page.evaluate(() => {
+    overflow = await page.evaluate(() => {
       const root = document.documentElement
       return root.scrollWidth - root.clientWidth
     })
@@ -209,14 +260,13 @@ test('supports keyboard selection and the skip link without console errors', asy
     errors.push(error.message)
   })
 
-  await page.goto('/')
+  await page.goto('/#workbench')
   await page.keyboard.press('Tab')
   await expect(page.locator('.skip-link')).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(/#module-main$/)
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('24–200mm')
+  await expect(page.getByRole('heading', { level: 1, name: '光学工作台' })).toBeVisible()
 
-  await goTo(page, '工作台')
   await page.getByTestId('element-L12').focus()
   await page.keyboard.press('Enter')
   await expect(page.getByTestId('inspector-selection')).toContainText('L12')

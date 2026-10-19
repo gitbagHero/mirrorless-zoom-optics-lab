@@ -19,8 +19,10 @@ type LensStructureProps = {
   onSelect: (selection: Selection) => void
   rayMode: RayMode
   showRays: boolean
+  showShell: boolean
   onRayModeChange: (mode: RayMode) => void
   onShowRaysChange: (show: boolean) => void
+  onShowShellChange: (show: boolean) => void
   spacing: Spacing
   zoomSpacing: Spacing
   objectDistanceMm: number
@@ -79,6 +81,153 @@ function GroupBracket({
         strokeWidth={selected ? 2.4 : 1.2}
         strokeOpacity={selected ? 0.95 : 0.45}
       />
+    </g>
+  )
+}
+
+function LensShell({ layout, focal }: { layout: LensLayout; focal: number }) {
+  const frontX = Math.min(...layout.elements.map((element) => element.startX)) - 12
+  const mountX = layout.imageX - 16 * STAGE.axialScale
+  const length = Math.max(mountX - frontX, 300)
+  const centerY = STAGE.centerY
+  const outer = 94
+  const band = 11
+  const top = centerY - outer
+  const bottom = centerY + outer
+  const zoomStart = frontX + length * 0.14
+  const zoomEnd = frontX + length * 0.44
+  const focusStart = mountX - length * 0.24
+  const focusEnd = mountX - length * 0.17
+  const rearStart = mountX - Math.min(240, length * 0.36)
+  const ribCount = 30
+
+  return (
+    <g className="lens-shell" data-testid="lens-shell" data-front-x={frontX.toFixed(2)} aria-hidden="true">
+      <rect
+        x={frontX}
+        y={top}
+        width={length}
+        height={outer * 2}
+        rx={22}
+        fill="rgba(148, 163, 184, 0.08)"
+        stroke="rgba(203, 213, 225, 0.58)"
+        strokeWidth={1.5}
+      />
+
+      <rect
+        x={rearStart}
+        y={top + band}
+        width={mountX - rearStart}
+        height={outer * 2 - band * 2}
+        fill="rgba(15, 23, 42, 0.32)"
+        stroke="rgba(203, 213, 225, 0.28)"
+        strokeWidth={0.8}
+      />
+
+      <rect
+        x={frontX}
+        y={top}
+        width={length}
+        height={band}
+        rx={5}
+        fill="rgba(148, 163, 184, 0.36)"
+        stroke="rgba(226, 232, 240, 0.58)"
+        strokeWidth={1}
+      />
+      <rect
+        x={frontX}
+        y={bottom - band}
+        width={length}
+        height={band}
+        rx={5}
+        fill="rgba(15, 23, 42, 0.52)"
+        stroke="rgba(203, 213, 225, 0.48)"
+        strokeWidth={1}
+      />
+
+      <rect
+        x={frontX}
+        y={top}
+        width={18}
+        height={outer * 2}
+        rx={7}
+        fill="rgba(226, 232, 240, 0.2)"
+        stroke="rgba(226, 232, 240, 0.4)"
+        strokeWidth={1}
+      />
+      <rect
+        x={zoomStart}
+        y={top}
+        width={zoomEnd - zoomStart}
+        height={outer * 2}
+        rx={5}
+        fill="rgba(148, 163, 184, 0.18)"
+        stroke="rgba(203, 213, 225, 0.5)"
+        strokeWidth={1.2}
+      />
+      <rect
+        x={focusStart}
+        y={top}
+        width={focusEnd - focusStart}
+        height={outer * 2}
+        rx={4}
+        fill="rgba(148, 163, 184, 0.08)"
+        stroke="rgba(203, 213, 225, 0.24)"
+        strokeWidth={0.8}
+      />
+
+      {Array.from({ length: ribCount }, (_, index) => {
+        const x = zoomStart + ((zoomEnd - zoomStart) / (ribCount - 1)) * index
+        return (
+          <g key={`rib-${index}`}>
+            <line x1={x} y1={top + 2} x2={x} y2={top + band - 1} stroke="rgba(226,232,240,0.38)" strokeWidth={0.9} />
+            <line x1={x} y1={bottom - band + 1} x2={x} y2={bottom - 2} stroke="rgba(226,232,240,0.26)" strokeWidth={0.9} />
+          </g>
+        )
+      })}
+
+      <line
+        x1={rearStart}
+        y1={top + band}
+        x2={rearStart}
+        y2={bottom - band}
+        stroke="rgba(94, 234, 212, 0.55)"
+        strokeWidth={1.4}
+        strokeDasharray="3 5"
+      />
+      <line
+        x1={focusStart}
+        y1={top + band}
+        x2={focusStart}
+        y2={bottom - band}
+        stroke="rgba(203, 213, 225, 0.28)"
+        strokeWidth={1}
+      />
+
+      <rect
+        x={mountX - 8}
+        y={centerY - outer * 0.78}
+        width={16}
+        height={outer * 1.56}
+        rx={5}
+        fill="rgba(15, 23, 42, 0.7)"
+        stroke="rgba(203, 213, 225, 0.5)"
+        strokeWidth={1.2}
+      />
+      <circle cx={mountX - 8} cy={centerY} r={4} fill="none" stroke="rgba(226,232,240,0.45)" />
+
+      <text x={frontX + 32} y={top + 18} className="shell-label" fill="rgba(226,232,240,0.8)">
+        67
+      </text>
+      <text x={zoomStart + 8} y={top + 18} className="shell-label" fill="rgba(226,232,240,0.72)">
+        ZOOM
+      </text>
+      <text x={focusStart + 3} y={bottom - 16} className="shell-label" fill="rgba(226,232,240,0.6)">
+        FOCUS
+      </text>
+      <text x={mountX - 22} y={bottom - 16} textAnchor="end" className="shell-mark" fill="rgba(226,232,240,0.7)">
+        24-200/4-6.3 · {focal}mm
+      </text>
     </g>
   )
 }
@@ -371,8 +520,10 @@ export function LensStructure({
   onSelect,
   rayMode,
   showRays,
+  showShell,
   onRayModeChange,
   onShowRaysChange,
+  onShowShellChange,
   spacing,
   zoomSpacing,
   objectDistanceMm,
@@ -442,6 +593,14 @@ export function LensStructure({
           />
           显示光线
         </label>
+        <label className="ray-toggle">
+          <input
+            type="checkbox"
+            checked={showShell}
+            onChange={(event) => onShowShellChange(event.target.checked)}
+          />
+          外壳
+        </label>
         <span className="ray-efl" data-testid="efl-value">
           EFL (∞) {efl.toFixed(2)} mm
         </span>
@@ -486,6 +645,8 @@ export function LensStructure({
               stroke="rgba(148, 197, 255, 0.3)"
               strokeDasharray="4 10"
             />
+
+            {showShell ? <LensShell layout={layout} focal={focal} /> : null}
 
             {viewMode === 'elements' ? (
               <ElementView layout={layout} selection={selection} onSelect={onSelect} showElementLabels={focal <= 105} />
