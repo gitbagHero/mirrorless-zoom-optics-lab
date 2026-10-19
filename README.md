@@ -14,7 +14,9 @@
 
 **在线演示：** <https://gitbaghero.github.io/mirrorless-zoom-optics-lab/>
 
-> 当前版本：`v0.6 · I5`。已完成 19 片结构、六组双视图、二维光线追迹、24–200 mm 变焦运动、G5 内对焦与六章导览；正在按增量计划完成 I6 发布硬化。
+> 当前版本：`v1.0.0`。I0–I6 全部完成：结构、光路、变焦、对焦、导览与发布硬化。
+
+**发布说明：** [docs/release-notes-v1.0.md](docs/release-notes-v1.0.md)
 
 ---
 
@@ -32,42 +34,59 @@ NIKKOR 与 Nikon 是 Nikon Corporation 的商标。本项目是非官方、非�
 
 ---
 
-## 当前能力（I0–I5）
+## v1.0 能力
 
-- 明亮扁平的页面外壳 + 暗色光学舞台；
-- 19 片 / 15 组镜片结构，按专利半径绘制形状；
+### 结构与分组
+
+- 19 片 / 15 组镜片侧视结构，按专利半径绘制形状；
 - G1–G6、光圈、像面的功能分区与组括号；
 - “19 片结构 / 6 组功能”双视图；
 - 点击/键盘选择镜片或组，查看形状、nd/νd、类型与作用；
-- 二维逐面折射光线追迹：球面 + 非球面、Snell 折射、光圈裁剪；
+- ED / AS / ASED / VR / FOCUS 标记与推断边界。
+
+### 光路与变焦
+
+- 二维逐面折射：球面 + 非球面、Snell 折射、光圈裁剪；
 - 轴上 / 轴外 / 光线扇三种预设，支持显示光线开关；
-- 宽角端 EFL 24.70 mm 与专利表 8 对齐；
 - 24–200 mm 变焦滑杆，四锚点平滑插值；
-- “变焦时谁在动”面板：G1–G6 行程、G3/G6 同步块、D4 非单调提示；
-- G5 内对焦、手动对焦环、AF-S / AF-C 与目标距离选择；
+- G3 / G6 / 光圈整体块约束，D4 非单调保留；
+- “变焦时谁在动”面板：G1–G6 行程与同步关系；
+- EFL(∞)：24.70 / 50.00 / 105.00 / 194.00 mm 与专利表 8 对齐。
+
+### 对焦与成像
+
+- G5 内对焦，行程约 1.31–9.53 mm；
+- 手动对焦环、AF-S 单次对焦、AF-C 连续追焦；
+- 远景 / 主体 / 近景目标与目标距离；
 - 合成目标图的离焦模糊、合焦清晰与清晰度条；
-- 有限物距光线追迹：对焦位置会改变像面处的光线会聚；
+- 有限物距光线追迹：对焦位置改变像面处的光线会聚。
+
+### 导览与发布
+
 - 六章“从操作到原理”导览，每章带 Try this 状态预设；
 - 术语速查、来源与模型边界说明；
-- 官方规格、模型边界与来源入口；
-- 响应式布局（1920 / 1365 / 768 / 390）；
-- 键盘跳转、减少动态支持；
-- Vitest 数据单测 + Playwright 冒烟测试；
+- 响应式 1920 / 1365 / 768 / 390；
+- 键盘主路径、减少动态、ARIA 状态；
+- Vitest + Playwright；
 - GitHub Pages 自动部署。
 
-## 计划中的能力
+---
 
-| 增量 | 内容 | 状态 |
-|---|---|---|
-| I0 | 基础与设计系统 | ✅ verified |
-| I1 | 19 片结构与六组双视图 | ✅ verified |
-| I2 | 二维逐面折射光路引擎 | ✅ verified |
-| I3 | 24–200 mm 变焦运动 | ✅ verified |
-| I4 | 手动对焦 / AF-S / AF-C + 合成成像 | ✅ verified |
-| I5 | 分章导览与解释内容 | ✅ verified |
-| I6 | 响应式、无障碍、测试与 v1.0 发布 | ⏳ next |
+## 验证
 
-VR 防抖、光圈/景深、像差深化与科普视频导出属于 **post-v1.0** 路线，详见开发计划。
+| 项目 | 结果 |
+|---|---|
+| `pnpm test` | 28/28 |
+| `pnpm build` | 通过 |
+| `pnpm test:e2e` | 11/11（Chromium） |
+| EFL 锚点 | 24.70 / 50.00 / 105.00 / 194.00 mm |
+| 50 条光线批量追迹 | 无 NaN/Infinity |
+| G3/G6 块间距 | 61.84 mm 恒定 |
+| 键盘主路径 | 变焦 → 手动离焦 → AF-S 合焦 |
+| 减少动态 | AF-S 直接落到终态 |
+| 线上 Pages | 部署成功，无控制台错误 |
+
+浏览器说明：Chrome / Chromium 已自动化验证；当前环境没有可用的 Playwright WebKit/Firefox 二进制，Safari / Firefox 建议发布后做一次人工冒烟。详见发布说明。
 
 ---
 
@@ -93,10 +112,10 @@ pnpm dev
 
 默认开发地址：`http://127.0.0.1:5173/`
 
-## 验证
+## 验证命令
 
 ```bash
-pnpm test        # 光学数据单测
+pnpm test        # 光学、变焦、对焦与数据单测
 pnpm build       # TypeScript + 生产构建
 pnpm test:e2e    # Playwright 冒烟
 pnpm check       # 依次执行以上三项
@@ -107,18 +126,22 @@ pnpm check       # 依次执行以上三项
 ```text
 src/
   app/            # 页面入口与页面结构
-  components/     # 舞台、数据说明等 UI
-  data/           # 官方规格、来源、测试
+  components/     # 舞台、 Inspector、Focus、Guide 等 UI
+  data/           # 规格、镜片、导览、来源
+  hooks/          # 对焦/自动对焦控制
+  optics/         # 面处方、追迹、变焦、对焦与布局
   styles/         # 设计 tokens 与页面样式
 tests/            # Playwright 冒烟
 docs/
   research/       # 镜头光学调研、专利资料、结构图
   development-plan.md
+  release-notes-v1.0.md
 ```
 
 ## 文档
 
-- [v1.0 开发计划](docs/development-plan.md)
+- [v1.0.0 发布说明](docs/release-notes-v1.0.md)
+- [开发计划](docs/development-plan.md)
 - [NIKKOR Z 24-200 光学原理调研](docs/research/nikkor-z-24-200-research.md)
 - [调研原始资料说明](docs/research/raw/README.md)
 
