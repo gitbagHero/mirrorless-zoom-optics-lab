@@ -17,6 +17,11 @@ export interface TracedRay {
   pupil: number;
 }
 
+export function pupilHalf(ray: TracedRay) {
+  const stopHeight = ray.path[STOP]?.y ?? 0;
+  return Math.abs(stopHeight) < 1e-7 ? 0 : Math.sign(stopHeight);
+}
+
 const rimBySurface = new Map<number, number>();
 for (const lens of LENSES) {
   for (const id of [lens.front, lens.back]) {
@@ -100,17 +105,31 @@ export function traceInfinityBundle(
   apertureRadius: number,
   start = surfaces[0].z - 12,
 ) {
+  return traceSubjectBundle(surfaces, incidentDegrees, Infinity, entranceRadius, entranceFactor, apertureRadius, start);
+}
+
+export function traceSubjectBundle(
+  surfaces: readonly PositionedSurface[],
+  incidentDegrees: number,
+  distanceFromImage: number,
+  entranceRadius: number,
+  entranceFactor: number,
+  apertureRadius: number,
+  start = surfaces[0].z - 12,
+) {
   const rayCount = 81;
-  const direction = incidentDegrees * Math.PI / 180;
-  const initialSlope = Math.tan(direction);
+  const fieldSlope = Math.tan(incidentDegrees * Math.PI / 180);
   const samplePlane = surfaces[0].z;
-  const offsetAtStop = traceParaxial(surfaces.slice(0, STOP), 0, initialSlope).y;
-  const chiefHeight = -offsetAtStop / entranceFactor;
+  const objectGap = distanceFromImage + samplePlane;
+  const angularTransfer = traceParaxial(surfaces.slice(0, STOP), 0, 1).y;
+  const chiefHeight = -angularTransfer * fieldSlope / (entranceFactor + angularTransfer / objectGap);
 
   return Array.from({ length: rayCount }, (_, index) => {
     const pupil = (2 * index / (rayCount - 1) - 1) * 1.25;
-    const y = chiefHeight + pupil * entranceRadius + (start - samplePlane) * initialSlope;
-    return traceRay(surfaces, { z: start, y }, direction, apertureRadius, pupil);
+    const entranceHeight = chiefHeight + pupil * entranceRadius;
+    const slope = fieldSlope + entranceHeight / objectGap;
+    const y = entranceHeight + (start - samplePlane) * slope;
+    return traceRay(surfaces, { z: start, y }, Math.atan(slope), apertureRadius, pupil);
   });
 }
 

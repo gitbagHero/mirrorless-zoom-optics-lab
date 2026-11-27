@@ -36,6 +36,7 @@ export function zoomPose(request: number) {
     entranceRadius,
     entranceFactor,
     maxStopRadius: Math.abs(entranceFactor * entranceRadius),
+    closeFocusTravel: (anchor?.near.D4 ?? interpolate(left.near.D4, right.near.D4)) - spacing.D4,
     fieldAngle: (anchor?.halfAngle ?? interpolate(left.halfAngle, right.halfAngle)) * 0.24,
     diagonalAngle: 2 * Math.atan(SENSOR_DIAGONAL / (2 * measurement.focalLength)) * toDegrees,
     ...measurement,

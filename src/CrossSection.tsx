@@ -4,6 +4,7 @@ import type { LensElement } from "./optics/elements";
 import { surfaceSag } from "./optics/model";
 import type { PositionedSurface } from "./optics/model";
 import { STOP } from "./optics/prescription";
+import { pupilHalf } from "./optics/rays";
 import type { TracedRay } from "./optics/rays";
 import { DIAGRAM_START, SENSOR_DIAGONAL } from "./optics/zoom";
 
@@ -14,6 +15,7 @@ interface CrossSectionProps {
   rays: readonly TracedRay[];
   apertureRadius: number;
   isOffAxis: boolean;
+  phaseSplit?: boolean;
 }
 
 function sampleFace(surface: PositionedSurface, start: number, end: number): string[] {
@@ -30,7 +32,7 @@ function elementPath(lens: LensElement, surfaces: readonly PositionedSurface[]) 
   return `M ${[...front, ...back].join(" L ")} Z`;
 }
 
-export function CrossSection({ surfaces, selectedId, onSelect, rays, apertureRadius, isOffAxis }: CrossSectionProps) {
+export function CrossSection({ surfaces, selectedId, onSelect, rays, apertureRadius, isOffAxis, phaseSplit }: CrossSectionProps) {
   const sensorRadius = SENSOR_DIAGONAL / 2;
   const stopZ = surfaces[STOP - 1].z;
   const barrelFront = surfaces[0].z - 8;
@@ -95,8 +97,11 @@ export function CrossSection({ surfaces, selectedId, onSelect, rays, apertureRad
         <g className={isOffAxis ? "ray-layer ray-layer--off-axis" : "ray-layer"} aria-hidden="true">
           {rays.filter((_, index) => index % 4 === 0).map((ray) => {
             const endpoint = ray.path[ray.path.length - 1];
+            const half = phaseSplit ? pupilHalf(ray) : 0;
+            const pupilClass = half < 0 ? " ray--pupil-left" : half > 0 ? " ray--pupil-right" : "";
+            const blockedClass = ray.end === "sensor" ? "" : " ray--blocked";
             return (
-              <g key={ray.pupil} className={ray.end === "sensor" ? "ray" : "ray ray--blocked"}>
+              <g key={ray.pupil} className={`ray${pupilClass}${blockedClass}`}>
                 <polyline points={ray.path.map((point) => `${point.z.toFixed(4)},${point.y.toFixed(4)}`).join(" ")} />
                 {ray.end !== "sensor" && <circle cx={endpoint.z} cy={endpoint.y} r="0.4" />}
               </g>

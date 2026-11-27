@@ -1,12 +1,16 @@
 import { createRoot } from "react-dom/client";
-import { StrictMode, useMemo, useState } from "react";
+import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
 import { CrossSection } from "./CrossSection";
 import { ExperimentControls } from "./ExperimentControls";
+import { FocusControls, subjectLabel } from "./FocusControls";
+import type { FocusPlayback } from "./FocusControls";
 import { GroupMotion, SpotPanel, TargetPanel } from "./Observations";
 import { GROUPS, LENSES, LENS_KINDS } from "./optics/elements";
+import { clampFocusOffset, focusRange, imagePlaneOffset, moveFocusDoublet, solveAutofocus, traceFocusScene } from "./optics/focus";
+import type { FocusMode } from "./optics/focus";
 import { ASPHERES } from "./optics/prescription";
-import { measureSpot, traceInfinityBundle } from "./optics/rays";
-import { apertureForStops, DIAGRAM_START, zoomPose, ZOOM_MINIMUM } from "./optics/zoom";
+import { measureSpot } from "./optics/rays";
+import { apertureForStops, zoomPose, ZOOM_MINIMUM } from "./optics/zoom";
 import "./styles.css";
 
 const wideSurfaces = zoomPose(ZOOM_MINIMUM).surfaces;
@@ -29,21 +33,49 @@ function App() {
   const [zoom, setZoom] = useState(ZOOM_MINIMUM);
   const [offAxis, setOffAxis] = useState(false);
   const [apertureStops, setApertureStops] = useState(0);
+  const [subjectDistance, setSubjectDistance] = useState(Infinity);
+  const [mode, setMode] = useState<FocusMode>("manual");
+  const [focusOffset, setFocusOffset] = useState(0);
+  const focusPosition = useRef(0);
+  const [playback, setPlayback] = useState<FocusPlayback | null>(null);
+  const [afRequest, setAfRequest] = useState(0);
   const pose = useMemo(() => zoomPose(zoom), [zoom]);
   const aperture = apertureForStops(pose, apertureStops);
-  const rays = useMemo(() => traceInfinityBundle(
-    pose.surfaces,
-    offAxis ? pose.fieldAngle : 0,
-    pose.entranceRadius,
-    pose.entranceFactor,
-    aperture.radius,
-    DIAGRAM_START,
-  ), [pose, offAxis, aperture.radius]);
+  const scene = useMemo(() => ({
+    pose, subjectDistance, incidentDegrees: offAxis ? pose.fieldAngle : 0, apertureRadius: aperture.radius,
+  }), [pose, subjectDistance, offAxis, aperture.radius]);
+  const effectiveOffset = clampFocusOffset(focusOffset, pose);
+  const surfaces = useMemo(() => moveFocusDoublet(pose.surfaces, effectiveOffset), [pose.surfaces, effectiveOffset]);
+  const rays = useMemo(() => traceFocusScene(scene, surfaces), [scene, surfaces]);
   const spot = useMemo(() => measureSpot(rays), [rays]);
+  const imageOffset = imagePlaneOffset(surfaces, subjectDistance);
+
+  useEffect(() => {
+    if (mode === "manual" || afRequest === 0) return;
+    let timeout = window.setTimeout(() => {
+      const result = solveAutofocus(scene, mode, focusPosition.current);
+      const showStep = (step: number) => {
+        const next = result.steps[step].offset;
+        focusPosition.current = next;
+        setFocusOffset(next);
+        setPlayback({ result, step });
+        if (step + 1 < result.steps.length) {
+          timeout = window.setTimeout(() => showStep(step + 1), mode === "phase" ? 220 : 75);
+        }
+      };
+      showStep(0);
+    }, 140);
+    return () => window.clearTimeout(timeout);
+  }, [afRequest, mode, scene]);
+
+  const updateFocus = (position: number) => {
+    focusPosition.current = position;
+    setFocusOffset(position);
+  };
   const lens = LENSES.find((item) => item.id === selectedId) ?? LENSES[0];
   const group = GROUPS.find((item) => item.id === lens.group);
-  const front = pose.surfaces[lens.front - 1];
-  const back = pose.surfaces[lens.back - 1];
+  const front = surfaces[lens.front - 1];
+  const back = surfaces[lens.back - 1];
   const centerThickness = (back.z - front.z).toFixed(2);
   const aspheres = [lens.front, lens.back].filter((id) => ASPHERES[id]);
 
@@ -57,6 +89,7 @@ function App() {
           </a>
           <nav aria-label="页内导航">
             <a href="#diagram">镜头剖面</a>
+            <a href="#focus">对焦实验</a>
             <a href="#references">模型资料</a>
           </nav>
         </div>
@@ -78,13 +111,56 @@ function App() {
         <ExperimentControls
           zoom={zoom}
           focalLength={pose.focalLength}
-          onZoom={setZoom}
+          onZoom={(value) => {
+            if (value === zoom) return;
+            setPlayback(null);
+            updateFocus(clampFocusOffset(focusPosition.current, zoomPose(value)));
+            setZoom(value);
+          }}
           offAxis={offAxis}
           fieldAngle={pose.fieldAngle}
-          onFieldChange={setOffAxis}
+          onFieldChange={(value) => {
+            if (value === offAxis) return;
+            setPlayback(null);
+            setOffAxis(value);
+          }}
           apertureStops={apertureStops}
           fNumber={aperture.fNumber}
-          onApertureChange={setApertureStops}
+          onApertureChange={(value) => {
+            if (value === apertureStops) return;
+            setPlayback(null);
+            setApertureStops(value);
+          }}
+        />
+
+        <FocusControls
+          mode={mode}
+          onModeChange={(value) => {
+            if (value === mode) return;
+            setPlayback(null);
+            setAfRequest(0);
+            setMode(value);
+          }}
+          subjectDistance={subjectDistance}
+          onSubjectChange={(value) => {
+            if (value === subjectDistance) return;
+            setPlayback(null);
+            setSubjectDistance(value);
+          }}
+          offset={effectiveOffset}
+          limits={focusRange(pose)}
+          onFocusChange={(position) => {
+            setSelectedId("E16");
+            updateFocus(position);
+          }}
+          imageOffset={imageOffset}
+          onAutofocus={() => {
+            setPlayback(null);
+            setSelectedId("E16");
+            setAfRequest((request) => request + 1);
+          }}
+          playback={playback}
+          autofocusArmed={afRequest > 0}
         />
 
         <div className="workspace">
@@ -92,25 +168,31 @@ function App() {
             <div className="panel-heading">
               <div>
                 <h2 id="diagram-heading">镜筒剖面</h2>
-                <p>{pose.anchor ? `专利档位 ${pose.anchor.id}` : "连续变焦 · 插值位置"} · 无穷远</p>
+                <p>{pose.anchor ? `专利档位 ${pose.anchor.id}` : "连续变焦 · 插值位置"} · {subjectLabel(subjectDistance)}</p>
               </div>
               <div className="focal-reading" aria-label="处方复算焦距">
                 {pose.focalLength.toFixed(2)} <span>mm</span>
               </div>
             </div>
             <CrossSection
-              surfaces={pose.surfaces}
+              surfaces={surfaces}
               selectedId={selectedId}
               onSelect={setSelectedId}
               rays={rays}
               apertureRadius={aperture.radius}
               isOffAxis={offAxis}
+              phaseSplit={mode === "phase"}
             />
             <div className="legend" aria-label="镜片分类图例">
               {Object.entries(LENS_KINDS).map(([kind, label]) => (
                 <span key={kind}><i className={`swatch glass--${kind}`} aria-hidden="true" />{label}</span>
               ))}
-              <span><i className={offAxis ? "ray-swatch ray-swatch--off-axis" : "ray-swatch"} aria-hidden="true" />当前光束</span>
+              {mode === "phase" ? (
+                <>
+                  <span><i className="ray-swatch ray-swatch--pupil-left" aria-hidden="true" />负半瞳</span>
+                  <span><i className="ray-swatch ray-swatch--pupil-right" aria-hidden="true" />正半瞳</span>
+                </>
+              ) : <span><i className={offAxis ? "ray-swatch ray-swatch--off-axis" : "ray-swatch"} aria-hidden="true" />当前光束</span>}
               <span><i className="ray-swatch ray-swatch--blocked" aria-hidden="true" />截止光线</span>
             </div>
             <div className="element-tray" aria-label="按运动组选择镜片">
@@ -181,6 +263,7 @@ function App() {
               镜片分类参考尼康量产剖面。轴向间距、曲率与玻璃参数取自尼康专利参考实施例 12，图中镜片口径为示意估计。
               15 个光学组用于统计光学组成，图中的 G1–G5 描述专利设计里的运动分组。
               连续位置在专利档位间插值，可能出现离焦。光阑开口由处方 f 值估算，测试图使用近轴对角视角及几何光斑模拟。
+              自动对焦根据当前仿真的分瞳落点或测试图评分驱动对焦双片，镜片位置及 AF 行程用于教学。
             </p>
           </div>
           <ul className="source-links">

@@ -23,8 +23,10 @@ test("selects all nineteen elements and shows prescription and group details", a
   await expect(inspector.getByText("31 号面", { exact: true })).toBeVisible();
   await inspector.getByRole("button", { name: "E16", exact: true }).click();
   await expect(inspector.getByRole("heading", { name: /^E16 / })).toBeVisible();
-  await expect(page.locator('[data-lens="E02"]')).toBeVisible();
-  const edCenter = await page.locator('[data-lens="E02"]').boundingBox();
+  const edLens = page.locator('[data-lens="E02"]');
+  await expect(edLens).toBeVisible();
+  await edLens.scrollIntoViewIfNeeded();
+  const edCenter = await edLens.boundingBox();
   if (!edCenter) throw new Error("Expected a visible E02 path");
   await page.mouse.click(edCenter.x + edCenter.width / 2, edCenter.y + edCenter.height / 2);
   await expect(inspector.getByRole("heading", { name: "E02 正双凸" })).toBeVisible();
@@ -68,4 +70,33 @@ test("updates the optical result on zoom, field and aperture changes", async ({ 
   await page.getByRole("button", { name: "离轴", exact: true }).click();
   await expect(page.getByRole("button", { name: "离轴", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(spot.locator(".spot-hit--off-axis").first()).toBeVisible();
+});
+
+test("moves the focus doublet manually and runs both autofocus methods", async ({ page }) => {
+  await page.goto("/");
+  const focus = page.getByRole("region", { name: "对焦实验" });
+  const offset = focus.getByLabel("对焦双片位移");
+  const status = focus.getByLabel("自动对焦状态");
+  const focusSlider = focus.getByRole("slider", { name: "对焦双片 E16/E17" });
+  await focus.getByRole("button", { name: "近景", exact: true }).click();
+  await expect(page.getByText("近轴焦点在像面后")).toBeVisible();
+  await focusSlider.press("Home");
+  await expect(offset).toHaveText("-1.000 mm");
+  await focusSlider.press("End");
+  await expect(offset).toHaveText("0.805 mm");
+  await expect(page.getByText("近轴焦点在像面前")).toBeVisible();
+
+  await focus.getByRole("button", { name: "AF 相位" }).click();
+  await focus.getByRole("button", { name: "启动自动对焦" }).click();
+  await expect(status).toHaveText("已合焦");
+  await expect(focus.getByText("向物方移动")).toBeVisible();
+  await expect(page.getByText("负半瞳", { exact: true })).toBeVisible();
+
+  await focus.getByRole("button", { name: "AF 对比度" }).click();
+  await focus.getByRole("button", { name: "中景", exact: true }).click();
+  await focus.getByRole("button", { name: "启动自动对焦" }).click();
+  await expect(status).toHaveText("已合焦");
+  await expect(focus.getByText("停在最高评分位置")).toBeVisible();
+  await focus.getByRole("slider", { name: "主体距离" }).press("Home");
+  await expect(status).toHaveText("超出可对焦范围");
 });
