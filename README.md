@@ -4,6 +4,8 @@
 
 以 NIKKOR Z 24–200mm f/4–6.3 VR 为例，查看 19 枚镜片的二维剖面、玻璃类别、曲面形状及运动分组。
 
+打开网页后默认进入镜头剖面与成像。顶部菜单切换实验引导、镜头剖面与成像、变焦与镜组、对焦实验、镜头防抖和模型资料。切换模块会保留实验参数。引导可载入预设并打开对应实验，防抖示意可直接打开剖面并选中 E09。
+
 当前可连续变焦或跳到四个专利档位，调整光圈并切换轴上、离轴光束。剖面同步显示逐面折射与遮挡，镜组位移以广角端为基准，像面光斑及教学测试图随操作更新。
 
 选择主体距离后，MF 可直接移动对焦双片 E16/E17。两种 AF 分别展示正负半瞳像点的位置差，以及测试图对比度评分的搜索过程。变焦中间档位采用插值，AF 行程与测试图均为教学模型。
@@ -32,15 +34,17 @@ pnpm test:browser
 
 已有匹配依赖时，可以使用 `npm run dev`、`npm test`、`npm run build` 和 `npm run preview` 调用同一套脚本。
 
-## GitHub Pages 发布
+## Cloudflare Pages 发布
 
-现有站点使用 [原项目地址](https://gitbaghero.github.io/mirrorless-zoom-optics-lab/)。此版本的工作流仅在专用发布仓库 `gitbagHero/mirrorless-zoom-optics-lab-gpt` 的 `gpt-optics-demo` 分支运行 Pages 作业。
+GPT 版使用 Cloudflare Pages Direct Upload。[生产地址](https://mirrorless-zoom-optics-lab-gpt.pages.dev/) · [首个部署快照](https://a1ad3df6.mirrorless-zoom-optics-lab-gpt.pages.dev/)
 
-1. 建立专用仓库，通过独立的 Git 远程推送 `gpt-optics-demo`。首次推送到空仓库后，确认此分支为该仓库的默认分支。
-2. 在专用仓库的 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。若 `github-pages` 环境设有分支限制，允许 `gpt-optics-demo` 发布。
-3. 在专用仓库的 **Actions** 启动或重跑 Pages 工作流。它会运行光学测试，根据站点路径构建并发布，随后 `verify-site` 对正式地址运行浏览器验收。
+当前由本地构建后上传。在 `gpt-optics-demo` 上运行 `npm run build`，再将 `build/` 上传至现有的 Cloudflare 项目：
 
-新站点的预计默认地址为 [gitbaghero.github.io/mirrorless-zoom-optics-lab-gpt](https://gitbaghero.github.io/mirrorless-zoom-optics-lab-gpt/)。实际地址由 Actions 的 `deploy` 作业提供。可把该地址设为 `PLAYWRIGHT_SITE_URL`，再用 `pnpm test:browser` 验证线上站点。 [GitHub Pages 配置](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
+```sh
+npx wrangler pages deploy build --project-name mirrorless-zoom-optics-lab-gpt --branch gpt-optics-demo
+```
+
+可将生产地址设为 `PLAYWRIGHT_SITE_URL`，再用 `pnpm test:browser` 执行线上浏览器验收。当前的 GitHub Pages 工作流限定在另一发布仓库，原仓库的推送与 Cloudflare 上传各自执行。 [Cloudflare Pages Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/)
 
 ## 项目资料
 

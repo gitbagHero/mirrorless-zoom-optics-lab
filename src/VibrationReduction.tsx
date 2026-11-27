@@ -15,9 +15,9 @@ export function VibrationReduction({ shake, enabled, onShake, onToggle, onInspec
   const image = enabled ? axis : displacedImage;
 
   return (
-    <section className="panel vr-panel" id="vr" aria-labelledby="vr-heading">
+    <section className="panel vr-panel" aria-label="镜头防抖 VR">
       <div className="vr-copy">
-        <h2 id="vr-heading">镜头防抖 VR</h2>
+        <h2>机身抖动与像点补偿</h2>
         <p>机身抖动会使像点偏离原位置。G3 中的胶合双片 E09/E10 垂直于光轴移动，让像点向参考位置回移。</p>
         <div className="control-heading">
           <label htmlFor="shake-slider">机身俯仰扰动</label>

@@ -1,10 +1,13 @@
 import { ZOOM_ANCHORS } from "./optics/prescription";
 import { ZOOM_MAXIMUM, ZOOM_MINIMUM } from "./optics/zoom";
 
-interface ExperimentControlsProps {
+interface ZoomControlProps {
   zoom: number;
   focalLength: number;
   onZoom: (value: number) => void;
+}
+
+interface ExperimentControlsProps {
   offAxis: boolean;
   fieldAngle: number;
   onFieldChange: (value: boolean) => void;
@@ -18,44 +21,49 @@ const zoomSpan = ZOOM_MAXIMUM - ZOOM_MINIMUM;
 const anchorLabels = ["广角", "中焦 I", "中焦 II", "长焦"];
 const sliderPosition = (focalLength: number) => Math.round((focalLength - ZOOM_MINIMUM) / zoomSpan * sliderMax);
 
+export function ZoomControl({ zoom, focalLength, onZoom }: ZoomControlProps) {
+  return (
+    <section className="zoom-controls panel" aria-label="变焦控制">
+      <div className="control-heading">
+        <label htmlFor="zoom-slider">变焦</label>
+        <output htmlFor="zoom-slider" className="control-reading">{focalLength.toFixed(2)} mm</output>
+      </div>
+      <input
+        type="range"
+        id="zoom-slider"
+        min={0}
+        max={sliderMax}
+        value={sliderPosition(zoom)}
+        aria-valuetext={`${focalLength.toFixed(2)} 毫米`}
+        onChange={(event) => {
+          const position = event.currentTarget.valueAsNumber;
+          const anchor = ZOOM_ANCHORS.find((item) => sliderPosition(item.focalLength) === position);
+          onZoom(anchor?.focalLength ?? ZOOM_MINIMUM + position / sliderMax * zoomSpan);
+        }}
+      />
+      <div className="zoom-anchors" role="group" aria-label="专利变焦档位">
+        {ZOOM_ANCHORS.map((anchor, index) => (
+          <button
+            key={anchor.id}
+            type="button"
+            className="control-button"
+            title={`${anchorLabels[index]} · 处方 ${anchor.focalLength.toFixed(2)} mm`}
+            aria-pressed={zoom === anchor.focalLength}
+            onClick={() => onZoom(anchor.focalLength)}
+          >
+            {Number(anchor.focalLength.toFixed(2))} mm
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function ExperimentControls({
-  zoom, focalLength, onZoom, offAxis, fieldAngle, onFieldChange, apertureStops, fNumber, onApertureChange,
+  offAxis, fieldAngle, onFieldChange, apertureStops, fNumber, onApertureChange,
 }: ExperimentControlsProps) {
   return (
-    <section className="experiment-controls panel" aria-label="实验控制">
-      <div className="zoom-controls">
-        <div className="control-heading">
-          <label htmlFor="zoom-slider">变焦</label>
-          <output htmlFor="zoom-slider" className="control-reading">{focalLength.toFixed(2)} mm</output>
-        </div>
-        <input
-          type="range"
-          id="zoom-slider"
-          min={0}
-          max={sliderMax}
-          value={sliderPosition(zoom)}
-          aria-valuetext={`${focalLength.toFixed(2)} 毫米`}
-          onChange={(event) => {
-            const position = event.currentTarget.valueAsNumber;
-            const anchor = ZOOM_ANCHORS.find((item) => sliderPosition(item.focalLength) === position);
-            onZoom(anchor?.focalLength ?? ZOOM_MINIMUM + position / sliderMax * zoomSpan);
-          }}
-        />
-        <div className="zoom-anchors" role="group" aria-label="专利变焦档位">
-          {ZOOM_ANCHORS.map((anchor, index) => (
-            <button
-              key={anchor.id}
-              type="button"
-              className="control-button"
-              title={`${anchorLabels[index]} · 处方 ${anchor.focalLength.toFixed(2)} mm`}
-              aria-pressed={zoom === anchor.focalLength}
-              onClick={() => onZoom(anchor.focalLength)}
-            >
-              {Number(anchor.focalLength.toFixed(2))} mm
-            </button>
-          ))}
-        </div>
-      </div>
+    <section className="experiment-controls panel" aria-label="成像控制">
       <div className="aperture-controls">
         <div className="control-heading">
           <label htmlFor="aperture-slider">光圈</label>
@@ -82,7 +90,7 @@ export function ExperimentControls({
           <button type="button" className="control-button" aria-pressed={!offAxis} onClick={() => onFieldChange(false)}>轴上</button>
           <button type="button" className="control-button" aria-pressed={offAxis} onClick={() => onFieldChange(true)}>离轴</button>
         </div>
-        <p className="scale-labels">无穷远物点 · 单色 d 线</p>
+        <p className="scale-labels">单色 d 线</p>
       </div>
     </section>
   );

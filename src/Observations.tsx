@@ -14,6 +14,8 @@ export function GroupMotion({
   selectedGroup: string;
   onSelect: (id: string) => void;
 }) {
+  const activeGroup = groupFronts.find((group) => group.id === selectedGroup);
+
   return (
     <section className="panel motion-panel" aria-labelledby="motion-heading">
       <h2 id="motion-heading">镜组位移</h2>
@@ -39,6 +41,12 @@ export function GroupMotion({
         })}
       </div>
       <p className="observation-caption">G3、光阑与 G5 同位移联动。</p>
+      {activeGroup && (
+        <div className="group-description" aria-live="polite">
+          <h3>{activeGroup.id} {activeGroup.name}</h3>
+          <p>{activeGroup.description}</p>
+        </div>
+      )}
     </section>
   );
 }

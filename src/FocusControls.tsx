@@ -54,9 +54,9 @@ export function FocusControls({
     : playback ? outcomeLabels[playback.result.outcome] : shouldRefocus ? "等待重新测量" : "等待启动";
 
   return (
-    <section className="panel focus-panel" id="focus" aria-labelledby="focus-heading">
+    <section className="panel focus-panel" aria-label="对焦实验">
       <div className="focus-heading">
-        <h2 id="focus-heading">对焦实验</h2>
+        <h2>对焦控制</h2>
         <div className="focus-modes" role="group" aria-label="对焦模式">
           {(Object.keys(modeLabels) as FocusMode[]).map((key) => (
             <button key={key} className="control-button" type="button" aria-pressed={key === mode} onClick={() => onModeChange(key)}>
