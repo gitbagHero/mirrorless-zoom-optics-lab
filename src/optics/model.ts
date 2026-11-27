@@ -33,7 +33,19 @@ export function surfaceSag(surface: Surface, height: number): number {
   );
 }
 
-function traceParaxial(surfaces: readonly PositionedSurface[], height: number, reducedAngle: number) {
+export function surfaceSlope(surface: Surface, height: number): number {
+  if (!Number.isFinite(surface.radius)) return 0;
+  const asphere = ASPHERES[surface.id];
+  const factor = Math.sqrt(1 - (asphere?.kappa ?? 1) * (height / surface.radius) ** 2);
+  const slope = height / (surface.radius * factor);
+  if (!asphere) return slope;
+  return asphere.coefficients.reduce((total, coefficient, index) => {
+    const power = 4 + 2 * index;
+    return total + power * coefficient * height ** (power - 1);
+  }, slope);
+}
+
+export function traceParaxial(surfaces: readonly PositionedSurface[], height: number, reducedAngle: number) {
   let y = height;
   let u = reducedAngle;
   for (let index = 0; index < surfaces.length; index += 1) {
@@ -45,9 +57,16 @@ function traceParaxial(surfaces: readonly PositionedSurface[], height: number, r
   return { y, u };
 }
 
+export function measureParaxial(surfaces: readonly PositionedSurface[]) {
+  const collimated = traceParaxial(surfaces, 1, 0);
+  return {
+    focalLength: -1 / collimated.u,
+    backFocus: -collimated.y / collimated.u,
+  };
+}
+
 export function checkAnchor(anchor: ZoomAnchor) {
   const infinity = locateSurfaces(anchor.spacing);
-  const collimated = traceParaxial(infinity, 1, 0);
   const shortDistance = locateSurfaces({
     ...anchor.spacing,
     D4: anchor.near.D4,
@@ -57,8 +76,7 @@ export function checkAnchor(anchor: ZoomAnchor) {
   const near = traceParaxial(shortDistance, anchor.near.D0 * incidentAngle, incidentAngle);
 
   return {
-    focalLength: -1 / collimated.u,
-    backFocus: -collimated.y / collimated.u,
+    ...measureParaxial(infinity),
     nearImageOffset: -near.y / near.u - anchor.spacing.BF,
   };
 }

@@ -1,13 +1,19 @@
+import { useMemo } from "react";
 import { GROUPS, LENSES } from "./optics/elements";
 import type { LensElement } from "./optics/elements";
 import { surfaceSag } from "./optics/model";
 import type { PositionedSurface } from "./optics/model";
 import { STOP } from "./optics/prescription";
+import type { TracedRay } from "./optics/rays";
+import { DIAGRAM_START, SENSOR_DIAGONAL } from "./optics/zoom";
 
 interface CrossSectionProps {
   surfaces: readonly PositionedSurface[];
   selectedId: string;
   onSelect: (id: string) => void;
+  rays: readonly TracedRay[];
+  apertureRadius: number;
+  isOffAxis: boolean;
 }
 
 function sampleFace(surface: PositionedSurface, start: number, end: number): string[] {
@@ -24,24 +30,25 @@ function elementPath(lens: LensElement, surfaces: readonly PositionedSurface[]) 
   return `M ${[...front, ...back].join(" L ")} Z`;
 }
 
-export function CrossSection({ surfaces, selectedId, onSelect }: CrossSectionProps) {
-  const objectSide = surfaces[0].z - 12;
+export function CrossSection({ surfaces, selectedId, onSelect, rays, apertureRadius, isOffAxis }: CrossSectionProps) {
+  const sensorRadius = SENSOR_DIAGONAL / 2;
   const stopZ = surfaces[STOP - 1].z;
-  const barrelFront = objectSide + 4;
+  const barrelFront = surfaces[0].z - 8;
   const active = LENSES.find((lens) => lens.id === selectedId) ?? LENSES[0];
   const activeZ = (surfaces[active.front - 1].z + surfaces[active.back - 1].z) / 2;
   const activeRim = active.drawRadius;
+  const paths = useMemo(() => LENSES.map((lens) => elementPath(lens, surfaces)), [surfaces]);
 
   return (
     <div className="diagram-scroll" tabIndex={0} aria-label="镜头剖面，可横向滚动">
       <svg
         className="cross-section"
-        viewBox={`${objectSide} -43 ${12 - objectSide} 87`}
+        viewBox={`${DIAGRAM_START} -43 ${12 - DIAGRAM_START} 87`}
         role="group"
         aria-labelledby="diagram-title diagram-description"
       >
-        <title id="diagram-title">19 片镜片的广角侧剖面</title>
-        <desc id="diagram-description">物方在左，像面在右。可点击镜片，或使用图下方的镜片编号选择。</desc>
+        <title id="diagram-title">19 片镜片的侧剖面与光路</title>
+        <desc id="diagram-description">物方在左，像面在右。可点击镜片，或使用图下方的镜片编号选择。光线到达像面或在遇到遮挡时终止。</desc>
         <defs>
           <pattern id="optical-grid" width="5" height="5" patternUnits="userSpaceOnUse">
             <path d="M 5 0 H 0 V 5" fill="none" className="grid-stroke" />
@@ -51,7 +58,7 @@ export function CrossSection({ surfaces, selectedId, onSelect }: CrossSectionPro
             <stop offset="1" stopColor="#181d23" />
           </linearGradient>
         </defs>
-        <rect x={objectSide} y={-43} width={12 - objectSide} height={87} fill="url(#optical-grid)" />
+        <rect x={DIAGRAM_START} y={-43} width={12 - DIAGRAM_START} height={87} fill="url(#optical-grid)" />
 
         {[-1, 1].map((side) => (
           <g transform={`scale(1 ${side})`} key={side} aria-hidden="true">
@@ -63,26 +70,39 @@ export function CrossSection({ surfaces, selectedId, onSelect }: CrossSectionPro
               fill="url(#barrel-shading)"
             />
             <path className="barrel-detail" d={`M ${barrelFront + 6} 31.9 H -115 M -104 27.8 H -34 M -25 25.1 H -13`} />
-            <path className="stop" d={`M ${stopZ - 0.8} 22 H ${stopZ + 0.8} V 12 L ${stopZ} 8.3 L ${stopZ - 0.8} 12 Z`} />
+            <path className="stop" d={`M ${stopZ - 0.8} 22 H ${stopZ + 0.8} V ${apertureRadius + 2}
+              L ${stopZ} ${apertureRadius} L ${stopZ - 0.8} ${apertureRadius + 2} Z`} />
           </g>
         ))}
 
-        <path className="optic-axis" d={`M ${objectSide + 1} 0 H 7`} aria-hidden="true" />
-        <path className="sensor" d="M 0 -19 V 19 M -0.9 -19 H 0.9 M -0.9 19 H 0.9" aria-hidden="true" />
-        <text className="diagram-text" x={objectSide + 3} y={-37}>物方</text>
+        <path className="optic-axis" d={`M ${DIAGRAM_START + 1} 0 H 7`} aria-hidden="true" />
+        <path className="sensor" d={`M 0 ${-sensorRadius} V ${sensorRadius}
+          M -0.9 ${-sensorRadius} H 0.9 M -0.9 ${sensorRadius} H 0.9`} aria-hidden="true" />
+        <text className="diagram-text" x={DIAGRAM_START + 3} y={-37}>物方</text>
         <text className="diagram-text" x={stopZ} y={-33.8} textAnchor="middle">光阑</text>
-        <text className="diagram-text sensor-label" x={0} y={-23} textAnchor="middle">像面</text>
+        <text className="diagram-text sensor-label" x={0} y={-26} textAnchor="middle">像面</text>
 
-        {LENSES.map((lens) => (
+        {LENSES.map((lens, index) => (
           <path
             key={lens.id}
-            d={elementPath(lens, surfaces)}
-            className={`glass glass--${lens.kind}${lens.id === selectedId ? " glass--selected" : ""}`}
+            d={paths[index]}
+            className={`glass glass--${lens.kind}${lens.group === active.group ? " glass--active-group" : ""}${lens.id === selectedId ? " glass--selected" : ""}`}
             onClick={() => onSelect(lens.id)}
             data-lens={lens.id}
             aria-hidden="true"
           />
         ))}
+        <g className={isOffAxis ? "ray-layer ray-layer--off-axis" : "ray-layer"} aria-hidden="true">
+          {rays.filter((_, index) => index % 4 === 0).map((ray) => {
+            const endpoint = ray.path[ray.path.length - 1];
+            return (
+              <g key={ray.pupil} className={ray.end === "sensor" ? "ray" : "ray ray--blocked"}>
+                <polyline points={ray.path.map((point) => `${point.z.toFixed(4)},${point.y.toFixed(4)}`).join(" ")} />
+                {ray.end !== "sensor" && <circle cx={endpoint.z} cy={endpoint.y} r="0.4" />}
+              </g>
+            );
+          })}
+        </g>
         <path className="selection-leader" d={`M ${activeZ} ${-activeRim - 0.7} V ${-activeRim - 4.1}`} />
         <text className="diagram-text selection-label" x={activeZ} y={-activeRim - 5} textAnchor="middle">
           {active.id}

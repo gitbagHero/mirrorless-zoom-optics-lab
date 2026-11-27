@@ -1,14 +1,15 @@
 import { createRoot } from "react-dom/client";
-import { StrictMode, useState } from "react";
+import { StrictMode, useMemo, useState } from "react";
 import { CrossSection } from "./CrossSection";
+import { ExperimentControls } from "./ExperimentControls";
+import { GroupMotion, SpotPanel, TargetPanel } from "./Observations";
 import { GROUPS, LENSES, LENS_KINDS } from "./optics/elements";
-import { checkAnchor, locateSurfaces } from "./optics/model";
-import { ASPHERES, ZOOM_ANCHORS } from "./optics/prescription";
+import { ASPHERES } from "./optics/prescription";
+import { measureSpot, traceInfinityBundle } from "./optics/rays";
+import { apertureForStops, DIAGRAM_START, zoomPose, ZOOM_MINIMUM } from "./optics/zoom";
 import "./styles.css";
 
-const wide = ZOOM_ANCHORS[0];
-const wideSurfaces = locateSurfaces(wide.spacing);
-const wideCheck = checkAnchor(wide);
+const wideSurfaces = zoomPose(ZOOM_MINIMUM).surfaces;
 const sourcing = {
   product: "https://imaging.nikon.com/imaging/lineup/lens/z-mount/z_24-200mmf4-63_vr/",
   prescription: "https://patents.google.com/patent/WO2020157904A1/ja",
@@ -25,10 +26,24 @@ function LensMark() {
 
 function App() {
   const [selectedId, setSelectedId] = useState("E15");
+  const [zoom, setZoom] = useState(ZOOM_MINIMUM);
+  const [offAxis, setOffAxis] = useState(false);
+  const [apertureStops, setApertureStops] = useState(0);
+  const pose = useMemo(() => zoomPose(zoom), [zoom]);
+  const aperture = apertureForStops(pose, apertureStops);
+  const rays = useMemo(() => traceInfinityBundle(
+    pose.surfaces,
+    offAxis ? pose.fieldAngle : 0,
+    pose.entranceRadius,
+    pose.entranceFactor,
+    aperture.radius,
+    DIAGRAM_START,
+  ), [pose, offAxis, aperture.radius]);
+  const spot = useMemo(() => measureSpot(rays), [rays]);
   const lens = LENSES.find((item) => item.id === selectedId) ?? LENSES[0];
   const group = GROUPS.find((item) => item.id === lens.group);
-  const front = wideSurfaces[lens.front - 1];
-  const back = wideSurfaces[lens.back - 1];
+  const front = pose.surfaces[lens.front - 1];
+  const back = pose.surfaces[lens.back - 1];
   const centerThickness = (back.z - front.z).toFixed(2);
   const aspheres = [lens.front, lens.back].filter((id) => ASPHERES[id]);
 
@@ -52,7 +67,7 @@ function App() {
           <div>
             <p className="product-name" lang="en">NIKKOR Z 24–200mm f/4–6.3 VR</p>
             <h1 id="page-title">变焦镜头光学实验台</h1>
-            <p className="intro-copy">观察一支变焦镜头的内部结构。选择一枚镜片，查看它怎样参与成像。</p>
+            <p className="intro-copy">移动镜组、改变光圈，沿着每一面折射曲面观察光线怎样到达像面。</p>
           </div>
           <dl className="product-specs" aria-label="量产镜头规格">
             <div><dt>量产焦距</dt><dd>24–200 <small>mm</small></dd></div>
@@ -60,22 +75,43 @@ function App() {
           </dl>
         </section>
 
+        <ExperimentControls
+          zoom={zoom}
+          focalLength={pose.focalLength}
+          onZoom={setZoom}
+          offAxis={offAxis}
+          fieldAngle={pose.fieldAngle}
+          onFieldChange={setOffAxis}
+          apertureStops={apertureStops}
+          fNumber={aperture.fNumber}
+          onApertureChange={setApertureStops}
+        />
+
         <div className="workspace">
           <section className="diagram-panel panel" id="diagram" aria-labelledby="diagram-heading">
             <div className="panel-heading">
               <div>
                 <h2 id="diagram-heading">镜筒剖面</h2>
-                <p>参考处方 · 广角端 · 无穷远</p>
+                <p>{pose.anchor ? `专利档位 ${pose.anchor.id}` : "连续变焦 · 插值位置"} · 无穷远</p>
               </div>
-              <div className="focal-reading" aria-label="广角处方复算焦距">
-                {wideCheck.focalLength.toFixed(2)} <span>mm</span>
+              <div className="focal-reading" aria-label="处方复算焦距">
+                {pose.focalLength.toFixed(2)} <span>mm</span>
               </div>
             </div>
-            <CrossSection surfaces={wideSurfaces} selectedId={selectedId} onSelect={setSelectedId} />
+            <CrossSection
+              surfaces={pose.surfaces}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              rays={rays}
+              apertureRadius={aperture.radius}
+              isOffAxis={offAxis}
+            />
             <div className="legend" aria-label="镜片分类图例">
               {Object.entries(LENS_KINDS).map(([kind, label]) => (
                 <span key={kind}><i className={`swatch glass--${kind}`} aria-hidden="true" />{label}</span>
               ))}
+              <span><i className={offAxis ? "ray-swatch ray-swatch--off-axis" : "ray-swatch"} aria-hidden="true" />当前光束</span>
+              <span><i className="ray-swatch ray-swatch--blocked" aria-hidden="true" />截止光线</span>
             </div>
             <div className="element-tray" aria-label="按运动组选择镜片">
               {GROUPS.map((entry) => (
@@ -130,6 +166,12 @@ function App() {
               </div>
             </div>
           </aside>
+
+          <div className="observations">
+            <SpotPanel rays={rays} spot={spot} offAxis={offAxis} />
+            <TargetPanel focalLength={pose.focalLength} diagonalAngle={pose.diagonalAngle} rms={spot.rms} />
+          </div>
+          <GroupMotion surfaces={pose.surfaces} wideSurfaces={wideSurfaces} selectedGroup={lens.group} onSelect={setSelectedId} />
         </div>
 
         <section className="references panel" id="references" aria-labelledby="references-heading">
@@ -138,6 +180,7 @@ function App() {
             <p>
               镜片分类参考尼康量产剖面。轴向间距、曲率与玻璃参数取自尼康专利参考实施例 12，图中镜片口径为示意估计。
               15 个光学组用于统计光学组成，图中的 G1–G5 描述专利设计里的运动分组。
+              连续位置在专利档位间插值，可能出现离焦。光阑开口由处方 f 值估算，测试图使用近轴对角视角及几何光斑模拟。
             </p>
           </div>
           <ul className="source-links">
