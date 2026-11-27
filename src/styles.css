@@ -72,6 +72,16 @@ h1 { margin: 6px 0 9px; font-size: clamp(1.8rem, 3.4vw, 3.1rem); letter-spacing:
 
 .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 16px; align-items: start; }
 .panel { border: 1px solid var(--line); border-radius: 12px; background: #1b1e23; }
+.guide-panel { padding: 14px 20px; margin-bottom: 16px; }
+.guide-heading { display: flex; align-items: start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.guide-heading h2, .vr-copy h2 { font-size: 1.0625rem; font-weight: 670; }
+.guide-heading p { margin-top: 4px; color: var(--muted); font-size: .875rem; line-height: 1.5; }
+.guide-heading button { white-space: nowrap; }
+.lesson-selector, .lesson-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.lesson-body { margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: 11px 18px; }
+.lesson-body h3 { font-size: .9375rem; }
+.lesson-body p { margin-top: 5px; color: #d4dae1; font-size: .875rem; line-height: 1.55; }
+.lesson-body .lesson-observation { color: #e9c58e; }
 .experiment-controls {
   display: grid;
   grid-template-columns: minmax(260px, 1.6fr) minmax(164px, 1fr) minmax(164px, .8fr);
@@ -256,6 +266,26 @@ h1 { margin: 6px 0 9px; font-size: clamp(1.8rem, 3.4vw, 3.1rem); letter-spacing:
 .motion-group, .motion-list strong { font-family: var(--mono); color: #f1d09c; }
 .motion-list small { color: var(--muted); }
 
+.vr-panel { margin-top: 16px; padding: 16px 20px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; gap: 22px; }
+.vr-copy > p { margin: 6px 0 14px; color: var(--muted); font-size: .875rem; line-height: 1.6; }
+.vr-copy input { accent-color: var(--amber); display: block; width: 100%; min-height: 24px; margin-block: 8px; cursor: pointer; }
+.vr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.vr-inspect { color: #d6dce4; font-size: .875rem; text-decoration: underline; text-underline-offset: 3px; }
+.vr-inspect:hover { color: var(--amber); }
+.vr-figure { margin: 0; min-width: 0; }
+.vr-figure svg { display: block; width: 100%; background: #15191f; border: 1px solid #3b434c; border-radius: 6px; }
+.vr-figure svg text { fill: #bdc8d1; font: 11px var(--mono); }
+.vr-figure figcaption { margin-top: 7px; color: var(--muted); font-size: .8125rem; }
+.vr-axis, .vr-travel { stroke: #718591; stroke-width: .8; stroke-dasharray: 4 4; }
+.vr-travel { stroke: #b19873; }
+.vr-sensor { stroke: #80d8ca; fill: none; stroke-width: 1.6; }
+.vr-glass-negative { fill: #526d82; stroke: #b2c6d7; }
+.vr-glass-positive { fill: #775e43; stroke: #dfb582; }
+.vr-ray { stroke: #8df4d8; fill: none; stroke-width: 1.1; opacity: .8; }
+.vr-reference-dot { stroke: #ced8df; fill: none; }
+.vr-ghost-dot { fill: #86919b; }
+.vr-image-dot { fill: #8df4d8; }
+
 .references { margin-top: 16px; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; gap: 28px; }
 .references p { margin-top: 6px; max-width: 800px; color: var(--muted); font-size: 0.875rem; line-height: 1.6; }
 .source-links { display: grid; gap: 8px; padding: 0; list-style-type: none; font-size: 0.875rem; color: #d6dce4; flex-shrink: 0; }
@@ -290,6 +320,8 @@ h1 { margin: 6px 0 9px; font-size: clamp(1.8rem, 3.4vw, 3.1rem); letter-spacing:
   .references { align-items: start; flex-direction: column; gap: 12px; }
   .experiment-controls { padding: 13px; }
   .focus-panel { padding: 13px; }
+  .guide-panel, .vr-panel { padding: 13px; }
+  .vr-panel { grid-template-columns: minmax(0, 1fr); gap: 13px; }
   .observations { grid-template-columns: minmax(0, 1fr); }
   .control-button { min-height: 38px; }
 }

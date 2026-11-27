@@ -2,11 +2,13 @@ import { createRoot } from "react-dom/client";
 import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
 import { CrossSection } from "./CrossSection";
 import { ExperimentControls } from "./ExperimentControls";
+import { ExperimentGuide } from "./ExperimentGuide";
 import { FocusControls, subjectLabel } from "./FocusControls";
 import type { FocusPlayback } from "./FocusControls";
 import { GroupMotion, SpotPanel, TargetPanel } from "./Observations";
+import { INITIAL_SHAKE, VibrationReduction } from "./VibrationReduction";
 import { GROUPS, LENSES, LENS_KINDS } from "./optics/elements";
-import { clampFocusOffset, focusRange, imagePlaneOffset, moveFocusDoublet, solveAutofocus, traceFocusScene } from "./optics/focus";
+import { clampFocusOffset, FOCUS_PRESETS, focusRange, imagePlaneOffset, moveFocusDoublet, solveAutofocus, traceFocusScene } from "./optics/focus";
 import type { FocusMode } from "./optics/focus";
 import { ASPHERES } from "./optics/prescription";
 import { measureSpot } from "./optics/rays";
@@ -17,6 +19,7 @@ const wideSurfaces = zoomPose(ZOOM_MINIMUM).surfaces;
 const sourcing = {
   product: "https://imaging.nikon.com/imaging/lineup/lens/z-mount/z_24-200mmf4-63_vr/",
   prescription: "https://patents.google.com/patent/WO2020157904A1/ja",
+  autofocus: "https://onlinemanual.nikonimglib.com/z5/en/15_technical_notes_08.html",
 };
 
 function LensMark() {
@@ -39,6 +42,9 @@ function App() {
   const focusPosition = useRef(0);
   const [playback, setPlayback] = useState<FocusPlayback | null>(null);
   const [afRequest, setAfRequest] = useState(0);
+  const [activeLesson, setActiveLesson] = useState<number | null>(null);
+  const [shake, setShake] = useState(INITIAL_SHAKE);
+  const [vrEnabled, setVrEnabled] = useState(false);
   const pose = useMemo(() => zoomPose(zoom), [zoom]);
   const aperture = apertureForStops(pose, apertureStops);
   const scene = useMemo(() => ({
@@ -72,6 +78,24 @@ function App() {
     focusPosition.current = position;
     setFocusOffset(position);
   };
+
+  const applyLesson = (lesson: number | null) => {
+    setActiveLesson(lesson);
+    setZoom(ZOOM_MINIMUM);
+    setApertureStops(0);
+    setOffAxis(false);
+    setAfRequest(0);
+    setPlayback(null);
+    updateFocus(0);
+    const isFocusLesson = lesson === 2 || lesson === 3;
+    setSubjectDistance(isFocusLesson ? FOCUS_PRESETS[0].distance : Infinity);
+    setMode(lesson === 3 ? "phase" : "manual");
+    setSelectedId(isFocusLesson ? "E16" : lesson === 1 ? "E01" : "E15");
+    if (lesson === null) {
+      setShake(INITIAL_SHAKE);
+      setVrEnabled(false);
+    }
+  };
   const lens = LENSES.find((item) => item.id === selectedId) ?? LENSES[0];
   const group = GROUPS.find((item) => item.id === lens.group);
   const front = surfaces[lens.front - 1];
@@ -88,6 +112,7 @@ function App() {
             <span>镜头实验室<span className="brand-english" lang="en">Mirrorless Zoom Optics Lab</span></span>
           </a>
           <nav aria-label="页内导航">
+            <a href="#guide">实验引导</a>
             <a href="#diagram">镜头剖面</a>
             <a href="#focus">对焦实验</a>
             <a href="#references">模型资料</a>
@@ -107,6 +132,13 @@ function App() {
             <div><dt>镜片 / 光学组</dt><dd>19 / 15</dd></div>
           </dl>
         </section>
+
+        <ExperimentGuide
+          activeLesson={activeLesson}
+          onLesson={applyLesson}
+          onClose={() => setActiveLesson(null)}
+          onReset={() => applyLesson(null)}
+        />
 
         <ExperimentControls
           zoom={zoom}
@@ -256,6 +288,14 @@ function App() {
           <GroupMotion surfaces={pose.surfaces} wideSurfaces={wideSurfaces} selectedGroup={lens.group} onSelect={setSelectedId} />
         </div>
 
+        <VibrationReduction
+          shake={shake}
+          enabled={vrEnabled}
+          onShake={setShake}
+          onToggle={() => setVrEnabled((enabled) => !enabled)}
+          onInspect={() => setSelectedId("E09")}
+        />
+
         <section className="references panel" id="references" aria-labelledby="references-heading">
           <div>
             <h2 id="references-heading">模型资料</h2>
@@ -269,6 +309,7 @@ function App() {
           <ul className="source-links">
             <li><a href={sourcing.product} target="_blank" rel="noreferrer">尼康官方镜组与规格</a></li>
             <li><a href={sourcing.prescription} target="_blank" rel="noreferrer">WO2020157904A1 · 表 12</a></li>
+            <li><a href={sourcing.autofocus} target="_blank" rel="noreferrer">尼康 Z 5 · 混合 AF 规格</a></li>
           </ul>
         </section>
       </main>

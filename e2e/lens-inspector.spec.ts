@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("selects all nineteen elements and shows prescription and group details", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   await expect(page.getByRole("heading", { name: "变焦镜头光学实验台" })).toBeVisible();
   await expect(page.getByLabel("处方复算焦距")).toContainText("24.72");
   const inspector = page.getByRole("complementary", { name: "选中镜片详情" });
@@ -34,7 +34,7 @@ test("selects all nineteen elements and shows prescription and group details", a
 
 test("contains the horizontal scroll to the diagram on a narrow viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("./");
   const diagram = page.getByLabel("镜头剖面，可横向滚动");
   await expect(diagram).toBeVisible();
   expect(await diagram.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
@@ -44,7 +44,7 @@ test("contains the horizontal scroll to the diagram on a narrow viewport", async
 });
 
 test("updates the optical result on zoom, field and aperture changes", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   const view = page.getByLabel("处方复算焦距");
   const spot = page.getByRole("region", { name: "像面光斑" });
   const testChart = page.getByRole("region", { name: "教学测试图" });
@@ -73,7 +73,7 @@ test("updates the optical result on zoom, field and aperture changes", async ({ 
 });
 
 test("moves the focus doublet manually and runs both autofocus methods", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   const focus = page.getByRole("region", { name: "对焦实验" });
   const offset = focus.getByLabel("对焦双片位移");
   const status = focus.getByLabel("自动对焦状态");
